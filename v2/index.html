@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visor de recurso — U.INCCA</title>
+<meta name="description" content="Visor interactivo de recursos educativos de la Universidad INCCA de Colombia: bienvenida, ruta de aprendizaje, docente, tutorías, video y unidades del curso — contenido parametrizado por curso.">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#040C38">
+<meta name="color-scheme" content="light">
+
+<link rel="icon" href="./assets/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="./assets/img/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+<link rel="stylesheet" href="./assets/css/styles.css?v=2.0.0">
+</head>
+<body>
+
+<noscript>
+  <div style="position:fixed;inset:0;background:#040C38;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:8vw;font-family:Roboto,Arial,sans-serif;z-index:9999">
+    <p>Este contenido interactivo necesita JavaScript habilitado en tu navegador para funcionar. Por favor actívalo y recarga la página.</p>
+  </div>
+</noscript>
+
+<div class="deck" id="deck">
+
+  <div class="slides" id="slides" role="region" aria-label="Contenido del curso, navegable por diapositivas">
+
+    <!-- 1. HERO -->
+    <section class="slide on-dark" id="hero" role="group" aria-roledescription="diapositiva" aria-label="Inicio">
+      <div class="hero-bg-layer" aria-hidden="true">
+        <div class="hero-grid-bg"></div>
+        <div class="hero-ring hero-ring--outer"></div>
+        <div class="hero-ring hero-ring--inner"></div>
+        <div class="hero-blob hero-blob--gold" id="heroBlobGold"></div>
+        <div class="hero-blob hero-blob--cyan" id="heroBlobCyan"></div>
+        <div class="hero-sweep"></div>
+      </div>
+      <div class="slide-body hero-body">
+        <div class="stagger hero-stack">
+          <div class="hero-eyebrow">
+            <span class="hero-emblem-badge">
+              <img class="hero-eyebrow-mark" src="./assets/img/unincca-emblem.png" alt="" aria-hidden="true">
+            </span>
+            <div class="hero-eyebrow-lines">
+              <span class="hero-eyebrow-text">Universidad INCCA de Colombia</span>
+              <span class="hero-eyebrow-sub">INCCA Virtual · Educación en línea</span>
+            </div>
+          </div>
+
+          <div class="hero-badges" id="heroBadges"></div>
+
+          <div class="hero-main">
+            <div class="hero-left">
+              <div class="hero-kicker"><i class="fa-solid fa-house" aria-hidden="true"></i> Portada del recurso</div>
+              <div>
+                <span class="hero-accent-bar" aria-hidden="true"></span>
+                <h1 class="hero-title" id="courseName">—</h1>
+              </div>
+              <p class="hero-desc" id="heroResumen"></p>
+
+              <div class="hero-cta">
+                <button class="btn btn-gold" id="heroUnitsCue">
+                  <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ir a las unidades
+                </button>
+                <button class="btn-pill btn-pill--cyan" id="heroLearnCue">
+                  <span class="btn-pill-icon"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span>
+                  ¿Qué aprenderás?
+                </button>
+                <button class="btn-pill btn-pill--gold" id="heroTutoriasCue">
+                  <span class="btn-pill-icon"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span>
+                  Conoce tus clases
+                </button>
+                <button class="btn-pill btn-pill--cyan" id="heroActividadesCue" hidden>
+                  <span class="btn-pill-icon"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+                  Ir a actividades
+                  <span class="btn-pill-badge" hidden>0</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="hero-panel">
+              <div class="hero-panel-head">
+                <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
+                <span>Ficha del curso</span>
+              </div>
+              <div class="stat-grid">
+                <div class="stat-tile"><span class="stat-tile-icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span><span class="stat-num" id="statUnidades" data-counter="0">0</span><span class="stat-label">Unidades</span></div>
+                <div class="stat-tile"><span class="stat-tile-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span><span class="stat-num" id="statHoras" data-counter="0" data-counter-suffix="h">0</span><span class="stat-label">Trabajo directo</span></div>
+                <div class="stat-tile"><span class="stat-tile-icon"><i class="fa-solid fa-video" aria-hidden="true"></i></span><span class="stat-num" id="statTutorias" data-counter="0">0</span><span class="stat-label">Tutorías en vivo</span></div>
+                <div class="stat-tile"><span class="stat-tile-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span><span class="stat-num" id="statModulos" data-counter="0">0</span><span class="stat-label">Módulos</span></div>
+                <div class="stat-tile" id="statActividades" hidden><span class="stat-tile-icon"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span><span class="stat-num" id="statActividadesNum" data-counter="0">0</span><span class="stat-label">Actividades</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. PRESENTACIÓN DEL CURSO — video protagonista a pantalla grande +
+         título/párrafos opcionales. Diapositiva DISTINTA del DEA (más
+         abajo): antes ambas compartían un solo campo "video" del JSON, hoy
+         cada una tiene su propio contenido (ver renderDea() en main.js). -->
+    <section class="slide on-dark-solid" id="presentacion" role="group" aria-roledescription="diapositiva" aria-label="Presentación del curso">
+      <div class="premiere-bg" aria-hidden="true">
+        <div class="premiere-grid"></div>
+        <div class="premiere-ring premiere-ring-1"></div>
+        <div class="premiere-ring premiere-ring-2"></div>
+        <div class="premiere-ring premiere-ring-3"></div>
+        <div class="premiere-blob premiere-blob--cyan"></div>
+        <div class="premiere-blob premiere-blob--gold"></div>
+        <div class="premiere-sweep"></div>
+        <div class="premiere-vignette"></div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-head text-center" style="align-items:center;margin:0 auto">
+          <div class="tag"><i class="fa-solid fa-clapperboard" aria-hidden="true"></i> Presentación del curso</div>
+          <h2 class="heading" id="presentacionTitulo">Presentación del curso</h2>
+          <div class="premiere-intro" id="presentacionParrafos"></div>
+        </div>
+        <div class="premiere-ornament" aria-hidden="true">
+          <span class="premiere-ornament-line"></span>
+          <span class="premiere-ornament-icon"><i class="fa-solid fa-play"></i></span>
+          <span class="premiere-ornament-line"></span>
+        </div>
+        <div class="premiere-stage" id="presentacionVideoFrame">
+          <div class="premiere-glow" aria-hidden="true"></div>
+          <div class="premiere-frame">
+            <div class="ratio">
+              <iframe id="presentacionVideo" title="Video de presentación del curso" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+            </div>
+          </div>
+        </div>
+        <div class="dea-btn-row" style="justify-content:center">
+          <button class="btn btn-gold" id="presentacionUnitsCue">
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ir a las unidades
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. BIENVENIDA -->
+    <section class="slide" id="bienvenida" role="group" aria-roledescription="diapositiva" aria-label="Bienvenida">
+      <div class="welcome-geo" id="welcomeGeo" aria-hidden="true" hidden></div>
+      <div class="slide-body">
+        <div class="slide-head">
+          <div class="tag"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i> Bienvenida</div>
+          <h2 class="heading" id="bienvenidaTitulo">¡Bienvenidos al curso!</h2>
+        </div>
+        <div class="welcome-grid stagger" id="welcomeGrid">
+          <div class="welcome-text-wrap">
+            <div class="welcome-text" id="bienvenidaParrafos"></div>
+          </div>
+          <div class="quote-card">
+            <blockquote id="bienvenidaFrase"></blockquote>
+            <div class="quote-bar"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. APRENDERÁS — dos diseños posibles según el dato que traiga el
+         JSON (ver renderLearn() en main.js): grilla de tarjetas
+         (#learnGrid, de siempre) o texto largo + imagen opcional
+         (#learnTextGrid, para cursos que describen la ruta como un solo
+         bloque extenso en vez de temas discretos). Nunca los dos a la
+         vez — uno de los dos queda "hidden". -->
+    <section class="slide" id="aprenderas" role="group" aria-roledescription="diapositiva" aria-label="Qué aprenderás">
+      <div class="aprenderas-particles" aria-hidden="true">
+        <span class="particle"></span>
+        <span class="particle"></span>
+        <span class="particle"></span>
+        <span class="particle"></span>
+        <span class="particle"></span>
+      </div>
+      <div class="slide-body">
+        <div class="slide-head">
+          <div class="tag"><i class="fa-solid fa-route" aria-hidden="true"></i> Ruta de aprendizaje</div>
+          <h2 class="heading">¿Qué aprenderás?</h2>
+          <p class="sub" id="learnSub">Toca cada tarjeta para ver el detalle.</p>
+        </div>
+        <div class="learn-grid stagger" id="learnGrid"></div>
+        <div class="learn-text-grid stagger" id="learnTextGrid" hidden>
+          <div class="learn-text-container">
+            <div class="learn-text" id="learnText"></div>
+          </div>
+          <div class="learn-text-image" id="learnTextImageWrap">
+            <img id="learnTextImage" alt="">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. DEA — diapositiva propia, separada de "Presentación del curso"
+         (arriba): antes las dos compartían un solo campo "video" del JSON;
+         hoy cada una tiene su propio video/título/párrafos (ver renderDea()
+         en main.js). El video del DEA es opcional (dea_video). -->
+    <section class="slide on-dark" id="dea" role="group" aria-roledescription="diapositiva" aria-label="Diseño de Experiencia para el Aprendizaje">
+      <div class="slide-body">
+        <div class="dea-grid stagger">
+          <div class="dea-text">
+            <div class="tag"><i class="fa-solid fa-compass" aria-hidden="true"></i> DEA</div>
+            <h2 class="heading" id="deaTitulo" style="margin:10px 0 12px"></h2>
+            <div id="deaParrafos"></div>
+            <div class="dea-btn-row">
+              <button class="btn btn-gold" id="deaUnitsCue">
+                <i class="fa-solid fa-door-open" aria-hidden="true"></i> Ir a las unidades
+              </button>
+              <a class="btn btn-ghost" id="deaDescargaBtn" href="#" target="_blank" rel="noopener" hidden>
+                <i class="fa-solid fa-download" aria-hidden="true"></i> Descargar material
+              </a>
+            </div>
+          </div>
+          <div class="dea-video-frame" id="deaVideoFrame">
+            <div class="ratio">
+              <iframe id="deaVideo" title="Video del DEA" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+            </div>
+          </div>
+          <div class="dea-imagen-frame" id="deaImagenFrame" hidden>
+            <img id="deaImagen" alt="">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. DOCENTE CREADOR -->
+    <section class="slide" id="docente" role="group" aria-roledescription="diapositiva" aria-label="Docente creador">
+      <div class="slide-body">
+        <div class="slide-head">
+          <div class="tag"><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i> Docente creador</div>
+        </div>
+        <div class="teacher-grid stagger">
+          <div class="teacher-media" id="teacherMedia">
+            <div class="teacher-video-frame" id="teacherVideoFrame" hidden>
+              <div class="ratio">
+                <iframe id="teacherVideo" title="Video del docente creador" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+              </div>
+            </div>
+            <div class="teacher-avatar-frame" id="teacherAvatarFrame">
+              <img class="teacher-avatar" id="teacherAvatar" alt="">
+            </div>
+          </div>
+          <div class="teacher-info">
+            <h3 class="teacher-name" id="teacherName">Docente del curso</h3>
+            <div class="teacher-role" id="teacherRole"></div>
+            <div class="teacher-bio" id="teacherBio"></div>
+            <div class="teacher-tags" id="teacherTags"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6b. DOCENTE TUTOR — opcional: solo se muestra si el JSON trae
+         "profesor_tutor" (ver construirSlides() en main.js). Mismo
+         componente que el docente creador (.teacher-grid), otro rol. -->
+    <section class="slide" id="docente_tutor" role="group" aria-roledescription="diapositiva" aria-label="Docente tutor" hidden>
+      <div class="slide-body">
+        <div class="slide-head">
+          <div class="tag"><i class="fa-solid fa-user-tie" aria-hidden="true"></i> Docente tutor</div>
+        </div>
+        <div class="teacher-grid stagger">
+          <div class="teacher-media" id="tutorMedia">
+            <div class="teacher-video-frame" id="tutorVideoFrame" hidden>
+              <div class="ratio">
+                <iframe id="tutorVideo" title="Video del docente tutor" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+              </div>
+            </div>
+            <div class="teacher-avatar-frame" id="tutorAvatarFrame">
+              <img class="teacher-avatar" id="tutorAvatar" alt="">
+            </div>
+          </div>
+          <div class="teacher-info">
+            <h3 class="teacher-name" id="tutorName">Docente del curso</h3>
+            <div class="teacher-role" id="tutorRole"></div>
+            <div class="teacher-bio" id="tutorBio"></div>
+            <div class="teacher-tags" id="tutorTags"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. TUTORÍAS — ya no hay grabaciones ni link por sesión: un solo
+         link al recurso de Moodle (típicamente mod/googlemeet) + uno o
+         más bloques "día + hora" recurrentes que comparten ese mismo
+         link (ver renderTutorias()/estadoTutorias() en main.js). -->
+    <section class="slide on-dark-solid" id="tutorias" role="group" aria-roledescription="diapositiva" aria-label="Tutorías">
+      <div class="slide-body">
+        <div class="slide-head text-center" style="align-items:center;margin:0 auto">
+          <div class="tag"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Tu horario</div>
+          <h2 class="heading">Conoce tus clases</h2>
+          <p class="sub">Nos vemos cada semana, siempre por el mismo enlace.</p>
+        </div>
+
+        <div class="meet-card stagger" id="meetCard">
+          <div class="meet-icon-badge" aria-hidden="true"><i class="fa-solid fa-video"></i></div>
+          <div class="meet-schedule-label"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i> Horario semanal</div>
+          <div class="meet-schedule-list" id="meetScheduleList"></div>
+          <div class="meet-next" id="meetNext" hidden></div>
+          <a class="btn btn-gold meet-cta" id="meetCtaBtn" href="#" target="_blank" rel="noopener">
+            <i class="fa-solid fa-video" aria-hidden="true"></i> Ir al aula virtual
+          </a>
+          <p class="meet-caption">Acceso a tu clase en vivo y a las grabaciones — el mismo enlace todas las semanas.</p>
+        </div>
+
+        <div class="activity-empty" id="meetEmpty" hidden>
+          <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+          Este recurso todavía no tiene tutorías programadas.
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. UNIDADES — a pantalla completa (de arriba del todo hasta abajo del todo),
+         sin el padding/max-width del resto de diapositivas: ver .slide-fullbleed .slide-body.
+         Misma clase que usan las diapositivas custom tipo "pagina" (ver main.js). -->
+    <section class="slide slide-fullbleed" id="unidades" role="group" aria-roledescription="diapositiva" aria-label="Unidades del curso">
+      <div class="slide-body">
+        <div class="units-hero" id="unitsHero" aria-label="Módulos del curso"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <button class="deck-arrow deck-arrow--prev" id="prevBtn" aria-label="Diapositiva anterior"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+  <button class="deck-arrow deck-arrow--next" id="nextBtn" aria-label="Siguiente diapositiva"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+
+  <nav class="deck-floatnav" id="deckFloatNav" aria-label="Ir a diapositiva"></nav>
+
+</div>
+
+<!-- Modal de pantalla completa para diapositivas custom tipo "media" —
+     ver renderCustomSlides()/openMediaModal() en main.js. Vacío por
+     diseño: se llena con el mismo iframe/html de la diapositiva al abrir. -->
+<div class="media-modal-overlay" id="customMediaModalOverlay">
+  <div class="media-modal" role="dialog" aria-modal="true" aria-labelledby="customMediaModalTitle">
+    <button class="media-modal-close" id="customMediaModalClose" aria-label="Cerrar">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+    <h3 class="media-modal-title" id="customMediaModalTitle"></h3>
+    <p class="media-modal-descripcion" id="customMediaModalDescripcion"></p>
+    <div class="media-modal-body" id="customMediaModalBody"></div>
+  </div>
+</div>
+
+
+<script src="./assets/js/main.js?v=2.0.0" defer></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# Contenido de trabajo interno — no se publica
+recursos x/
+.thumbnail
+
+# Prototipo generado por herramienta de diseño interna (no funciona fuera de esa herramienta)
+Incca Maestria Hero.dc.html
+support.js
+
+# Copia de trabajo del visor (fuente de verdad local) — su contenido se
+# sincroniza a la raíz del repo para publicar; "visor final/" en sí no se
+# versiona dos veces. Ídem material de referencia y demos locales.
+visor final/
+visor final.zip
+prueba.html
+moodle-ejemplo-actual-real/
+visor v2/
+visor unidad/
+prueba-visor-unidad.html
+visor sistemas/
+
+# Mockups de referencia visual (ver visor final/renovado/ — se leen para
+# portar diseños, nunca se copian tal cual) y changelog de trabajo de
+# sesión — ninguno de los dos se publica.
+renovado/
+CAMBIOS.md
+
+# Sistema
+.DS_Store
+Thumbs.db

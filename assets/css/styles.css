@@ -1,0 +1,1400 @@
+/* ==========================================================================
+   U.INCCA · Maestría en Transformación de Conflictos y Construcción de Paz
+   Mazo de diapositivas interactivo — sin scroll de página (pensado para
+   incrustarse como iframe en Moodle). Paleta y tipografía institucional.
+   ========================================================================== */
+
+:root {
+  --oxford-blue: #040C38;
+  --dodger-blue: #2B8BFA;
+  --royal-blue: #0B349D;
+  --light-cyan: #65CBE3;
+
+  --old-gold: #CBB54E;
+  --bronze: #A58540;
+  --platinum: #E2E6E9;
+  --white: #FFFFFF;
+
+  --gradient-institutional: linear-gradient(to left, var(--dodger-blue), var(--oxford-blue));
+  --gradient-institutional-hover: var(--oxford-blue);
+  --gradient-gold: linear-gradient(to left, var(--old-gold), var(--bronze));
+
+  --text-body: #262b40;
+  --text-muted: #565f7a;
+
+  --font-base: 'Futura Book', Roboto, 'Fira Sans', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --shadow-soft: 0 10px 30px rgba(4, 12, 56, 0.1);
+  --shadow-strong: 0 20px 45px rgba(4, 12, 56, 0.22);
+  --ease-out: cubic-bezier(.16,.84,.44,1);
+
+  /* Espacio que cada diapositiva deja libre abajo para que la barra
+     flotante (.deck-floatnav, position:absolute) nunca tape contenido —
+     ya no es una barra de chrome sólida de punta a punta, así que esto
+     es solo margen de despeje, no la altura real de nada. */
+  --chrome-bottom: 90px;
+}
+
+* , *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* el deck no hace scroll de página */
+}
+
+body {
+  font-family: var(--font-base);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text-body);
+  background: var(--oxford-blue);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img, svg { max-width: 100%; display: block; }
+a { color: inherit; }
+h1, h2, h3, h4 { margin: 0; font-family: var(--font-base); }
+h1 { font-weight: 700; }
+h2 { font-weight: 600; }
+h3 { font-weight: 500; }
+p { margin: 0; }
+button { font-family: inherit; cursor: pointer; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus-visible { outline: 3px solid var(--light-cyan); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@keyframes incca-rise { from { opacity: 0; transform: translateY(22px);} to { opacity: 1; transform: translateY(0);} }
+@keyframes incca-float { 0%{transform:translate(0,0) rotate(0deg)} 50%{transform:translate(16px,-20px) rotate(7deg)} 100%{transform:translate(0,0) rotate(0deg)} }
+@keyframes incca-float2 { 0%{transform:translate(0,0) rotate(0deg)} 50%{transform:translate(-18px,16px) rotate(-5deg)} 100%{transform:translate(0,0) rotate(0deg)} }
+@keyframes incca-pulse-ring { 0%{box-shadow:0 0 0 0 rgba(203,181,78,.55)} 70%{box-shadow:0 0 0 14px rgba(203,181,78,0)} 100%{box-shadow:0 0 0 0 rgba(203,181,78,0)} }
+@keyframes incca-bounce-x { 0%,100%{transform:translateX(0)} 50%{transform:translateX(6px)} }
+@keyframes incca-sweep { 0%, 100% { transform: translateX(-4%); } 50% { transform: translateX(4%); } }
+
+/* ==========================================================================
+   DECK — contenedor de pantalla completa
+   ========================================================================== */
+.deck {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--gradient-institutional);
+}
+
+/* ---------- Slides ---------- */
+.slides {
+  position: absolute;
+  inset: 0;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: scale(.97);
+  transition: opacity .5s var(--ease-out), transform .55s var(--ease-out);
+  pointer-events: none;
+  z-index: 1;
+  background: var(--white);
+  overflow: hidden;
+}
+.slide.is-active { opacity: 1; transform: translateX(0) scale(1); pointer-events: auto; z-index: 3; }
+.slide.is-enter-right { transform: translateX(5%) scale(.97); opacity: 0; z-index: 2; }
+.slide.is-enter-left { transform: translateX(-5%) scale(.97); opacity: 0; z-index: 2; }
+.slide.is-exit-left { transform: translateX(-5%) scale(.97); opacity: 0; z-index: 2; }
+.slide.is-exit-right { transform: translateX(5%) scale(.97); opacity: 0; z-index: 2; }
+/* .slide ya fija su propio "display" (flex), que por especificidad
+   empataría con la regla [hidden] del navegador — sin esto, una
+   diapositiva fija oculta vía datos.secciones seguiría ocupando su lugar
+   en el árbol de accesibilidad aunque ya esté invisible por opacity. */
+.slide[hidden] { display: none; }
+
+/* Mismo problema que arriba, pero genérico: CUALQUIER elemento con un
+   "display" propio en una clase (grid/flex) y que además se oculta con
+   el atributo hidden desde JS (grid.hidden = true/false, patrón usado en
+   todo main.js) empata en especificidad con el [hidden] del navegador —
+   y gana la clase, no el atributo. Bug real encontrado en #learnTextGrid
+   y #learnGrid (ambos "¿Qué aprenderás?" — con .aprenderas seleccionado
+   por temas, el panel VACÍO de texto largo quedaba visible debajo de las
+   tarjetas, rompiendo el diseño) y en #deaImagenFrame. En vez de parchar
+   caso por caso (seguro que hay más y van a seguir apareciendo), esta
+   regla general garantiza que hidden SIEMPRE gane, sin importar qué
+   "display" traiga la clase — es exactamente el comportamiento que HTML
+   espera de hidden. */
+[hidden] { display: none !important; }
+
+.slide-body {
+  position: relative;
+  width: 100%;
+  /* Antes era un fijo de 1160px — en pantallas grandes dejaba muchísimo
+     margen vacío a los costados. Ahora crece con el viewport (mismo piso
+     de 1160px que ya tenía, para no cambiar nada en pantallas normales/
+     chicas) hasta un techo de 1720px, para que no se vuelva absurdamente
+     ancho en monitores 4K/ultrawide. Inicio y Tutorías angostan este
+     mismo valor más abajo — son contenido más "de texto/lista" que se
+     lee mejor sin estirarse tanto. */
+  max-width: clamp(1160px, 80vw, 1720px);
+  margin: 0 auto;
+  /* El bottom extra es despeje para que el contenido no quede tapado por
+     la barra flotante (.deck-floatnav) — la caja de la diapositiva en sí
+     (.slide) ocupa el 100% real de la pantalla siempre (ver .slides),
+     así el fondo/color de cada diapositiva nunca corta antes de llegar
+     abajo del todo. */
+  padding: clamp(14px, 3.4vh, 40px) clamp(16px, 5vw, 56px) calc(clamp(14px, 3.4vh, 40px) + var(--chrome-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.6vh, 26px);
+  height: 100%;
+  overflow-y: auto;
+  justify-content: flex-start;
+  justify-content: safe center;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(4,12,56,0.25) transparent;
+}
+.slide-body::-webkit-scrollbar { width: 7px; }
+.slide-body::-webkit-scrollbar-thumb { background: rgba(4,12,56,0.18); border-radius: 999px; }
+.on-dark .slide-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
+
+.slide.on-dark { background: var(--gradient-institutional); color: var(--white); }
+.slide.on-dark-solid { background: var(--oxford-blue); color: var(--white); }
+
+/* Inicio (título + resumen) y Tutorías (lista centrada) leen mejor más
+   angostos que el resto de las diapositivas — mismo piso/techo relativo. */
+#hero .slide-body { max-width: clamp(760px, 88vw, 1360px); }
+#tutorias .slide-body { max-width: clamp(680px, 56vw, 1000px); }
+
+/* Blobs decorativos (mismo lenguaje visual que el hero) — Docente se
+   sentía muy plano sin ningún fondo ambiental. */
+.slide#docente::before, .slide#docente_tutor::before {
+  content: ""; position: absolute; top: -10%; right: -8%; width: 38%; height: 60%;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(43,139,250,.10), rgba(43,139,250,0) 70%);
+}
+.slide#docente::after, .slide#docente_tutor::after {
+  content: ""; position: absolute; bottom: -14%; left: -6%; width: 34%; height: 55%;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(203,181,78,.14), rgba(203,181,78,0) 70%);
+}
+
+/* Reveal en cascada — se retriggerea vía JS cada vez que la diapositiva se activa */
+.stagger > * { opacity: 0; }
+.stagger.is-playing > * { animation: incca-rise .6s var(--ease-out) both; }
+.stagger.is-playing > *:nth-child(1) { animation-delay: .03s; }
+.stagger.is-playing > *:nth-child(2) { animation-delay: .09s; }
+.stagger.is-playing > *:nth-child(3) { animation-delay: .15s; }
+.stagger.is-playing > *:nth-child(4) { animation-delay: .21s; }
+.stagger.is-playing > *:nth-child(5) { animation-delay: .27s; }
+.stagger.is-playing > *:nth-child(6) { animation-delay: .33s; }
+.stagger.is-playing > *:nth-child(7) { animation-delay: .39s; }
+.stagger.is-playing > *:nth-child(8) { animation-delay: .45s; }
+.stagger.is-playing > *:nth-child(9) { animation-delay: .51s; }
+.stagger.is-playing > *:nth-child(10) { animation-delay: .57s; }
+
+/* ---------- Bottom chrome: flechas glass + barra flotante con íconos ----------
+   Reemplaza los círculos blancos sólidos y la barra de puntos por un
+   tratamiento "glass" (blur + saturate, fondo azul translúcido) — más
+   liviano visualmente que una barra de chrome sólida de punta a punta,
+   y la barra inferior ahora muestra un ícono por diapositiva (más
+   contexto que un punto) con la etiqueta de texto apareciendo solo en
+   la diapositiva activa. */
+.deck-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 35;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(4,12,56,0.5);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 8px 24px rgba(4,12,56,.3);
+  transition: background .2s, transform .2s;
+}
+.deck-arrow:hover { background: rgba(4,12,56,.75); transform: translateY(-50%) scale(1.08); }
+.deck-arrow:active { transform: translateY(-50%) scale(.94); }
+.deck-arrow--prev { left: 18px; }
+.deck-arrow--next { right: 18px; }
+@media (max-width: 560px) {
+  .deck-arrow { width: 38px; height: 38px; font-size: 14px; }
+  .deck-arrow--prev { left: 8px; }
+  .deck-arrow--next { right: 8px; }
+}
+
+.deck-floatnav {
+  position: absolute;
+  left: 50%; bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(4,12,56,.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 12px 34px rgba(4,12,56,.35);
+  max-width: min(92vw, 720px);
+  overflow-x: auto;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+.floatnav-item {
+  display: flex; align-items: center; gap: 8px;
+  border: none; background: transparent; color: var(--white);
+  border-radius: 999px; height: 40px; padding: 0 12px;
+  flex-shrink: 0;
+  transition: background .3s var(--ease-out), color .3s var(--ease-out), padding .3s var(--ease-out);
+}
+.floatnav-item:hover { background: rgba(255,255,255,.12); }
+.floatnav-item i { font-size: 12px; opacity: .75; transition: font-size .3s, opacity .3s; }
+.floatnav-item-label {
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+  max-width: 0; opacity: 0; overflow: hidden;
+  transition: max-width .3s var(--ease-out), opacity .2s var(--ease-out);
+}
+.floatnav-item.is-active { background: var(--gradient-gold); color: var(--oxford-blue); padding: 0 16px; }
+.floatnav-item.is-active:hover { background: var(--gradient-gold); }
+.floatnav-item.is-active i { font-size: 13px; opacity: 1; }
+.floatnav-item.is-active .floatnav-item-label { max-width: 160px; opacity: 1; }
+
+/* ==========================================================================
+   Componentes de contenido reutilizables dentro de cada diapositiva
+   ========================================================================== */
+.tag {
+  font-size: 12.5px;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--royal-blue);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.tag i { color: var(--dodger-blue); }
+.on-dark .tag, .on-dark-solid .tag { color: var(--light-cyan); }
+.on-dark .tag i, .on-dark-solid .tag i { color: var(--light-cyan); }
+
+.heading {
+  font-size: clamp(22px, 3vw, 34px);
+  font-weight: 700;
+  color: var(--oxford-blue);
+  line-height: 1.16;
+}
+.on-dark .heading, .on-dark-solid .heading { color: var(--white); }
+
+.sub {
+  color: var(--text-muted);
+  font-size: 14.5px;
+  max-width: 640px;
+}
+.on-dark .sub, .on-dark-solid .sub { color: var(--platinum); }
+
+.slide-head { display: flex; flex-direction: column; gap: 8px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font-size: 14.5px; font-weight: 700;
+  padding: 13px 24px;
+  border-radius: var(--radius-sm);
+  border: none;
+  text-decoration: none;
+  transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out), background .25s var(--ease-out);
+  line-height: 1;
+}
+.btn-primary { background: var(--gradient-institutional); color: var(--white); box-shadow: var(--shadow-soft); }
+.btn-primary:hover { background: var(--gradient-institutional-hover); transform: translateY(-2px); box-shadow: var(--shadow-strong); }
+.btn-gold { background: var(--gradient-gold); color: var(--oxford-blue); box-shadow: var(--shadow-soft); }
+.btn-gold:hover { background: var(--bronze); color: var(--white); transform: translateY(-2px); box-shadow: var(--shadow-strong); }
+.btn-ghost { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.35); color: var(--white); font-weight: 600; }
+.btn-ghost:hover { background: rgba(255,255,255,0.2); }
+.btn-outline { background: transparent; border: 1.5px solid var(--royal-blue); color: var(--royal-blue); font-weight: 600; padding: 9px 16px; font-size: 13px; }
+.btn-outline:hover { background: var(--royal-blue); color: var(--white); }
+.btn-sm { padding: 9px 15px; font-size: 13px; }
+/* ---------- Hero (slide 1) ---------- */
+.hero-body { justify-content: center; position: relative; }
+.hero-stack { position: relative; z-index: 1; display: flex; flex-direction: column; gap: clamp(16px, 2.4vh, 26px); }
+/* Capa decorativa a pantalla completa, hermana de .slide-body (no hija) a
+   propósito: #hero .slide-body tiene max-width angosto (columna de
+   lectura, ver más abajo) — si el punteado/los blobs fueran hijos suyos
+   quedarían encogidos a esa columna central en vez de cubrir todo el
+   ancho de la diapositiva, y además su desborde (right:-6%/left:-8%)
+   generaba scroll horizontal fantasma dentro de .slide-body. */
+.hero-bg-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.hero-grid-bg {
+  position: absolute; inset: 0; opacity: .7;
+  background-image:
+    linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.hero-ring { position: absolute; top: -130px; left: -130px; width: 360px; height: 360px; border-radius: 50%; border: 1px solid rgba(203,181,78,.24); }
+.hero-ring--inner { top: -90px; left: -90px; width: 280px; height: 280px; border-color: rgba(101,203,227,.18); }
+.hero-sweep {
+  position: absolute; top: -45%; left: -65%; width: 230%; height: 230%;
+  background: linear-gradient(75deg, transparent 42%, rgba(255,255,255,.06) 49%, transparent 57%);
+  animation: incca-sweep 9s ease-in-out infinite;
+}
+.hero-blob {
+  position: absolute; border-radius: 50%; pointer-events: none; filter: blur(2px);
+  transform: translate(calc(var(--hero-px, 0) * var(--hero-blob-mx, 0)), calc(var(--hero-py, 0) * var(--hero-blob-my, 0)));
+}
+.hero-blob--gold { top: 8%; right: -4%; width: 260px; height: 260px; --hero-blob-mx: -18px; --hero-blob-my: -14px; background: radial-gradient(circle at 30% 30%, rgba(203,181,78,.62), rgba(203,181,78,0) 70%); animation: incca-float 11s ease-in-out infinite; }
+.hero-blob--cyan { bottom: 6%; left: -6%; width: 300px; height: 300px; --hero-blob-mx: 16px; --hero-blob-my: 18px; background: radial-gradient(circle at 60% 40%, rgba(101,203,227,.52), rgba(101,203,227,0) 70%); animation: incca-float2 13s ease-in-out infinite; }
+
+.hero-eyebrow { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+.hero-emblem-badge {
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; padding: 7px;
+  background: rgba(255,255,255,.08); border: 1.5px solid rgba(203,181,78,.55);
+  box-shadow: 0 0 0 4px rgba(203,181,78,.12);
+  display: flex; align-items: center; justify-content: center;
+}
+.hero-eyebrow-mark { width: 100%; height: 100%; object-fit: contain; }
+.hero-eyebrow-lines { display: flex; flex-direction: column; gap: 2px; }
+.hero-eyebrow-text { font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; opacity: .92; font-weight: 700; }
+.hero-eyebrow-sub { font-size: 11px; color: var(--light-cyan); font-weight: 500; opacity: .9; }
+
+.hero-badges { display: flex; flex-wrap: wrap; gap: 8px; position: relative; z-index: 1; }
+.hero-badge { background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: .3px; display: inline-flex; align-items: center; gap: 6px; }
+.hero-badge i { font-size: 10px; }
+.hero-badge--solid { background: var(--gradient-gold); color: var(--oxford-blue); border: none; font-weight: 700; }
+
+.hero-main { display: flex; flex-wrap: wrap; gap: clamp(24px, 4vw, 56px); align-items: center; position: relative; z-index: 1; }
+.hero-left { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+
+.hero-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: var(--light-cyan); width: fit-content; }
+.hero-accent-bar { display: block; width: 46px; height: 4px; background: var(--gradient-gold); border-radius: 2px; margin-bottom: 12px; }
+
+.hero-title {
+  font-size: clamp(28px, 3vw + 1rem, 52px); font-weight: 800; line-height: 1.08; margin: 0;
+  max-width: 720px; overflow-wrap: break-word;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.hero-desc {
+  max-width: 62ch; font-size: clamp(14px, .3vw + 13px, 16.5px); line-height: 1.6; opacity: .92; margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.hero-cta .btn-gold { animation: incca-pulse-ring 2.8s infinite; }
+
+.hero-panel {
+  flex: 1 1 320px; max-width: 460px;
+  background: rgba(255,255,255,.07);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 30px 70px rgba(2,7,26,.4), inset 0 1px 0 rgba(255,255,255,.12);
+  display: flex; flex-direction: column;
+  padding: 22px 24px 26px;
+  gap: 16px;
+}
+.hero-panel-head { display: flex; align-items: center; gap: 8px; }
+.hero-panel-head i { color: var(--platinum); font-size: 13px; }
+.hero-panel-head span { font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; font-weight: 700; color: var(--platinum); opacity: .9; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 12px; }
+.stat-tile {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 16px 10px; gap: 8px;
+  transition: transform .25s var(--ease-out), background .25s, border-color .25s;
+}
+.stat-tile:hover { transform: translateY(-4px); background: rgba(255,255,255,.11); border-color: rgba(203,181,78,.4); }
+.stat-tile-icon {
+  width: 34px; height: 34px; border-radius: 50%; font-size: 14px;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+}
+.stat-num { font-size: 22px; font-weight: 800; color: var(--white); line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 10.5px; color: var(--platinum); font-weight: 600; opacity: .85; letter-spacing: .2px; }
+
+.btn-pill {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: none; border: 1.5px solid transparent; border-radius: 999px;
+  color: var(--white); font-weight: 700; font-size: 13.5px;
+  padding: 7px 20px 7px 7px; cursor: pointer;
+  transition: background .3s var(--ease-out), border-color .3s var(--ease-out), transform .3s var(--ease-out), box-shadow .3s var(--ease-out);
+}
+.btn-pill:active { transform: translateY(-1px); }
+.btn-pill-icon { width: 30px; height: 30px; border-radius: 50%; font-size: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.btn-pill--cyan { background: rgba(101,203,227,.1); border-color: rgba(101,203,227,.5); }
+.btn-pill--cyan .btn-pill-icon { background: rgba(101,203,227,.22); color: var(--light-cyan); }
+.btn-pill--cyan:hover { background: rgba(101,203,227,.24); border-color: rgba(101,203,227,.9); transform: translateY(-3px); box-shadow: 0 12px 26px rgba(101,203,227,.3); }
+.btn-pill--gold { background: rgba(203,181,78,.1); border-color: rgba(203,181,78,.5); }
+.btn-pill--gold .btn-pill-icon { background: rgba(203,181,78,.22); color: var(--old-gold); }
+.btn-pill--gold:hover { background: rgba(203,181,78,.24); border-color: rgba(203,181,78,.9); transform: translateY(-3px); box-shadow: 0 12px 26px rgba(203,181,78,.3); }
+
+/* ---------- Bienvenida ----------
+   align-items:start (no "center"): con textos largos (varios párrafos
+   reales, no solo el ejemplo corto) la columna de texto puede terminar
+   mucho más alta que la tarjeta de cita — con "center" la tarjeta quedaba
+   flotando a mitad de un bloque de texto larguísimo, lejos de donde el
+   ojo entra a la diapositiva. "sticky" además la deja visible arriba
+   mientras el texto larga se desplaza dentro de .slide-body (que es el
+   contenedor real con scroll, ver overflow-y:auto arriba). */
+.welcome-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 34px; align-items: start; }
+/* Sin frase_destacada la .quote-card queda oculta y #welcomeGeo vive
+   fuera del grid (ver más abajo) — .welcome-text es la única celda real,
+   así que ocupa todo el ancho en vez de quedarse en la mitad angosta. */
+#bienvenida.has-geo .welcome-grid { grid-template-columns: 1fr; }
+@media (max-width: 760px) { .welcome-grid { grid-template-columns: 1fr; } }
+.welcome-text p { color: var(--text-muted); font-size: 15.5px; line-height: 1.7; margin: 0 0 12px; }
+.welcome-text p:last-child { margin-bottom: 0; }
+.quote-card { background: var(--oxford-blue); border-radius: var(--radius-lg); padding: 28px 26px; color: var(--white); position: sticky; top: 0; overflow: hidden; }
+.quote-card::before { content: "\201C"; position: absolute; top: -30px; left: -6px; font-family: Georgia, serif; font-size: 130px; color: rgba(203,181,78,0.18); line-height: 1; font-weight: 700; }
+.quote-card blockquote { position: relative; font-size: 16.5px; font-style: italic; line-height: 1.5; margin: 14px 0 14px; }
+.quote-card cite { position: relative; display: block; font-style: normal; font-size: 12.5px; color: var(--light-cyan); font-weight: 600; margin-bottom: 10px; }
+.quote-bar { position: relative; height: 3px; width: 48px; background: var(--old-gold); border-radius: 2px; }
+@media (max-width: 760px) { .quote-card { position: static; } }
+
+/* Blobs ambientales sutiles, igual espíritu que Docente/Aprenderás */
+.slide#bienvenida::before {
+  content: ""; position: absolute; top: -8%; left: -4%; width: 26%; height: 46%;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(43,139,250,.07), transparent 70%);
+}
+.slide#bienvenida::after {
+  content: ""; position: absolute; bottom: -12%; left: 20%; width: 22%; height: 40%;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(203,181,78,.08), transparent 70%);
+}
+
+/* ---------- Bienvenida — variante "texto largo sin frase" ----------
+   Ver visor final/renovado/bienvenida-slide.html: cuando no llega
+   bienvenida.frase_destacada (la .quote-card queda oculta), en vez de dejar
+   la columna derecha vacía se muestra una escena de figuras geométricas
+   flotantes con parallax de mouse. renderHeroYBienvenidaYDocente() en
+   main.js decide cuál de las dos mostrar y agrega/saca .has-geo de
+   #bienvenida (la diapositiva entera, no el grid — ver por qué abajo).
+
+   #welcomeGeo NO vive dentro de .welcome-grid: es hermano de .slide-body
+   (mismo motivo que .hero-bg-layer/.premiere-bg más arriba) y se ancla
+   exactamente igual que el mockup — left:55%/right:0/top:0/bottom:0, la
+   misma proporción que .slide-left/.slide-right (1.1fr/0.9fr = 55%/45%)
+   en visor final/renovado/bienvenida-slide.html — de punta a punta, sin
+   quedar acotado a la altura de una fila de grid.
+
+   position:fixed como en el mockup (y no absolute): en este deck no hay
+   diferencia visual — .slide siempre tiene un transform activo
+   (scale .97/1), y eso ya establece el containing block para fixed, así
+   que en la práctica ancla igual contra .slide.
+
+   Sin fondo ni sombra propios a propósito: el panel es transparente, solo
+   recorta (overflow:hidden) la escena de figuras — todo el volumen visual
+   lo dan las figuras mismas (ver initWelcomeGeo() en main.js), igual que
+   en la animación original que se está portando acá. */
+.welcome-geo {
+  position: fixed;
+  left: 55%; right: 0; top: 0; bottom: 0;
+  z-index: 1;
+  overflow: hidden;
+  perspective: 1000px;
+}
+.welcome-shape-wrapper { position: absolute; transition: transform .1s ease-out; }
+.welcome-shape { position: relative; transform: rotate(45deg); transform-origin: center; border-radius: 2px; opacity: 0; box-shadow: -15px 15px 35px rgba(0,0,0,.75); }
+.welcome-shape.glass {
+  background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.02));
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: -10px 10px 20px rgba(0,0,0,.5);
+}
+.welcome-shape.white { background: linear-gradient(135deg, #ffffff, #c8c8c8); }
+.welcome-shape.blue { background: linear-gradient(135deg, #001233, #002570); border-left: 4px solid #d4af37; border-bottom: 4px solid #d4af37; }
+@keyframes incca-shape-pop { from { opacity: 0; transform: scale(.8) rotate(45deg); } to { opacity: 1; transform: scale(1) rotate(45deg); } }
+@keyframes incca-shape-float-a { 0%, 100% { transform: scale(1) rotate(45deg) translate(0,0); } 50% { transform: scale(1.015) rotate(45deg) translate(-6px,-6px); } }
+@keyframes incca-shape-float-b { 0%, 100% { transform: scale(1) rotate(45deg) translate(0,0); } 50% { transform: scale(1.015) rotate(45deg) translate(6px,6px); } }
+
+/* Ancho: se angosta para dejarle todo el ancho libre al panel de la
+   derecha (ver arriba). */
+#bienvenida.has-geo .slide-body { max-width: 55%; margin-left: 0; margin-right: auto; }
+
+/* Scroll: en el mockup .slide-left es un flex-column con overflow:hidden
+   donde SOLO .welcome-text-wrap (flex:1;min-height:0;overflow-y:auto)
+   scrollea — el tag/heading quedan siempre fijos arriba, y el texto tiene
+   su propia scrollbar degradé. La primera versión de este port dejaba
+   scrollear .slide-body entero (el patrón genérico que usa el resto del
+   deck) — eso desalineaba el heading, distinto del mockup. Acá se
+   reproduce el mismo esquema: .slide-body dueño dejade scrollear él mismo
+   y pasa a ser un flex-column fijo; .welcome-grid (la fila con el texto)
+   se estira a flex:1 para ocupar el resto del alto; adentro,
+   .welcome-text-wrap es quien realmente scrollea. */
+#bienvenida.has-geo .slide-body { overflow: hidden; }
+#bienvenida.has-geo .welcome-grid { flex: 1; min-height: 0; align-items: stretch; }
+#bienvenida.has-geo .welcome-text-wrap {
+  min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dodger-blue) transparent;
+}
+#bienvenida.has-geo .welcome-text-wrap::-webkit-scrollbar { width: 5px; }
+#bienvenida.has-geo .welcome-text-wrap::-webkit-scrollbar-track { background: transparent; }
+#bienvenida.has-geo .welcome-text-wrap::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--dodger-blue), var(--royal-blue)); border-radius: 999px; }
+
+@media (max-width: 760px) {
+  /* El panel de 45% de ancho ya no cabe apilado en columna angosta y el
+     texto vuelve a fluir a ancho completo (mismo criterio que
+     .learn-text-grid--full), con el scroll genérico de .slide-body en vez
+     de la cajita interna angosta. En vez de sacar la escena entera
+     (display:none — el criterio hasta ahora), pasa a ser un fondo de
+     diapositiva completa, muy tenue y difuminado — "se ve a través de una
+     tela" — para no perder el trabajo de la animación en mobile: cubre
+     .slide de punta a punta, detrás del texto (z-index más bajo,
+     pointer-events:none para no robarle el toque/scroll). */
+  .welcome-geo {
+    left: 0; right: 0; top: 0; bottom: 0;
+    z-index: 0;
+    opacity: .16;
+    filter: blur(3px);
+    pointer-events: none;
+  }
+  #bienvenida.has-geo .slide-body { max-width: clamp(1160px, 80vw, 1720px); margin-left: auto; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; }
+  #bienvenida.has-geo .welcome-grid { flex: none; min-height: auto; }
+  #bienvenida.has-geo .welcome-text-wrap { overflow: visible; padding-right: 0; }
+}
+
+/* ---------- Aprenderás — modo texto largo + imagen opcional ----------
+   Alternativa a .learn-grid (tarjetas) para cursos que describen la ruta
+   de aprendizaje como un solo bloque extenso en vez de temas discretos —
+   ver renderLearn() en main.js, que decide cuál de los dos pintar según
+   si llegó "aprenderas_texto".
+   Rediseño (ver visor final/renovado/diseno-texto-largo.html): blobs
+   ambientales + partículas flotantes detrás de toda la diapositiva, línea
+   central que titila entre texto e imagen, panel de texto con su propio
+   scroll interno (antes: sticky + scroll de toda la diapositiva, mismo
+   patrón que la cita de Bienvenida) sobre fondo degradé con scrollbar a
+   medida, e imagen con animación de flote suave. Los altos fijos del
+   mockup (580px / 420px / 380px, pensados para una página que scrollea
+   libre) se reemplazan por clamp() atado al alto del viewport — el deck
+   real vive en un iframe de alto fijo (900px, ver README) y un valor fijo
+   ahí ya causó overlaps con la barra flotante en Presentación. */
+.slide#aprenderas::before {
+  content: ""; position: absolute; top: -18%; right: -12%; width: 46%; height: 62%;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(43,139,250,.15), rgba(43,139,250,0) 70%);
+  animation: incca-float 14s ease-in-out infinite;
+}
+.slide#aprenderas::after {
+  content: ""; position: absolute; bottom: -14%; left: -10%; width: 38%; height: 54%;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(101,203,227,.12), rgba(101,203,227,0) 70%);
+  animation: incca-float2 16s ease-in-out infinite;
+}
+.aprenderas-particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.aprenderas-particles .particle { position: absolute; border-radius: 50%; background: var(--dodger-blue); opacity: .3; }
+.aprenderas-particles .particle:nth-child(1) { width: 8px;  height: 8px;  top: 20%; left: 15%; animation: incca-particle-float 12s ease-in-out infinite; }
+.aprenderas-particles .particle:nth-child(2) { width: 6px;  height: 6px;  top: 60%; left: 80%; animation: incca-particle-float 15s ease-in-out infinite 2s; }
+.aprenderas-particles .particle:nth-child(3) { width: 10px; height: 10px; top: 40%; left: 50%; animation: incca-particle-float 18s ease-in-out infinite 4s; }
+.aprenderas-particles .particle:nth-child(4) { width: 7px;  height: 7px;  top: 75%; left: 25%; background: var(--light-cyan);  animation: incca-particle-float 14s ease-in-out infinite 3s; }
+.aprenderas-particles .particle:nth-child(5) { width: 9px;  height: 9px;  top: 10%; left: 70%; background: var(--royal-blue); animation: incca-particle-float 16s ease-in-out infinite 1s; }
+@keyframes incca-particle-float {
+  0%, 100% { transform: translate(0,0) scale(1); opacity: .3; }
+  25%      { transform: translate(30px,-40px) scale(1.2); opacity: .5; }
+  50%      { transform: translate(-20px,-80px) scale(.8); opacity: .2; }
+  75%      { transform: translate(40px,-50px) scale(1.1); opacity: .4; }
+}
+
+/* Barra dorada→degradé bajo el título, solo en esta diapositiva */
+#aprenderas .heading { position: relative; margin-bottom: 4px; }
+#aprenderas .heading::after {
+  content: ""; position: absolute; bottom: -8px; left: 0;
+  width: 60px; height: 3px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--dodger-blue), var(--light-cyan));
+}
+
+.learn-text-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 32px; align-items: stretch; }
+.learn-text-grid::before {
+  content: ""; position: absolute; top: 8%; left: 50%; width: 3px; height: 84%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, transparent, var(--dodger-blue) 30%, var(--royal-blue) 70%, transparent);
+  opacity: .25; box-shadow: 0 0 20px rgba(43,139,250,.4);
+  animation: incca-line-glow 4s ease-in-out infinite;
+  pointer-events: none;
+}
+.learn-text-grid.learn-text-grid--full { grid-template-columns: 1fr; max-width: 78ch; margin: 0 auto; }
+.learn-text-grid.learn-text-grid--full::before { display: none; }
+@keyframes incca-line-glow {
+  0%, 100% { opacity: .25; box-shadow: 0 0 20px rgba(43,139,250,.4); }
+  50%      { opacity: .45; box-shadow: 0 0 30px rgba(43,139,250,.6); }
+}
+
+.learn-text-container {
+  height: clamp(280px, 58vh, 580px);
+  overflow-y: auto; overflow-x: hidden;
+  background: linear-gradient(135deg, rgba(43,139,250,.08), rgba(11,52,157,.12));
+  border: 1px solid rgba(43,139,250,.25);
+  border-radius: var(--radius-lg);
+  padding: 26px 28px;
+  box-shadow: 0 16px 40px rgba(43,139,250,.15), inset 0 1px 0 rgba(255,255,255,.2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--dodger-blue) rgba(11,52,157,.15);
+}
+.learn-text-container::-webkit-scrollbar { width: 9px; }
+.learn-text-container::-webkit-scrollbar-track { background: rgba(11,52,157,.15); border-radius: 5px; margin: 6px 0; }
+.learn-text-container::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--dodger-blue), var(--royal-blue)); border-radius: 5px; border: 2px solid rgba(255,255,255,.2); }
+.learn-text-container::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--royal-blue), var(--oxford-blue)); }
+
+.learn-text p { color: var(--text-muted); font-size: 15.5px; line-height: 1.75; margin: 0 0 13px; }
+.learn-text p:last-child { margin-bottom: 0; }
+
+.learn-text-image {
+  position: relative;
+  height: clamp(240px, 58vh, 580px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-strong);
+}
+/* La imagen se sobredimensiona 24px de alto (12px de margen negativo
+   arriba) para que la animación de flote (±10px) nunca deje ver un hueco
+   en el borde inferior del marco recortado. */
+.learn-text-image img { width: 100%; height: calc(100% + 24px); margin-top: -12px; object-fit: cover; display: block; animation: incca-img-float 6s ease-in-out infinite; }
+@keyframes incca-img-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@media (max-width: 920px) {
+  .learn-text-grid { grid-template-columns: 1fr; }
+  .learn-text-grid::before { display: none; }
+  .learn-text-container { height: clamp(200px, 32vh, 340px); padding: 20px; }
+  .learn-text-image { height: clamp(150px, 22vh, 240px); }
+}
+
+/* ---------- Learn cards ---------- */
+.learn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.learn-card {
+  position: relative; min-height: 172px;
+  background: var(--white);
+  border-radius: 20px;
+  padding: 20px 22px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(4,12,56,0.07);
+  border: 1px solid rgba(4,12,56,0.07);
+  overflow: hidden;
+  transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out);
+}
+.learn-card:hover, .learn-card.is-open { transform: translateY(-4px); box-shadow: var(--shadow-strong); }
+.learn-card-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--royal-blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: 12px; font-size: 14px; transition: background .25s, color .25s; }
+.learn-card:hover .learn-card-icon, .learn-card.is-open .learn-card-icon { background: var(--light-cyan); color: var(--oxford-blue); }
+.learn-card-title { font-weight: 700; font-size: 14.5px; color: var(--oxford-blue); margin-bottom: 6px; transition: color .2s; }
+.learn-card:hover .learn-card-title { color: var(--royal-blue); }
+.learn-card-hint { font-size: 11.5px; color: #9099b3; display: flex; align-items: center; gap: 5px; transition: opacity .2s; }
+.learn-card.is-open .learn-card-hint { opacity: 0; }
+.learn-card-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 20px; background: linear-gradient(180deg, rgba(255,255,255,0.5), #fff 26%); transform: translateY(100%); transition: transform .4s cubic-bezier(.2,.8,.2,1); max-height: 100%; overflow-y: auto; }
+.learn-card.is-open .learn-card-overlay { transform: translateY(0); }
+.learn-card-overlay p { font-size: 12.8px; color: var(--text-muted); line-height: 1.5; margin: 0; }
+
+/* ---------- Docente ----------
+   Media a la izquierda (video si hay, si no el avatar solo, centrado en
+   la misma columna) + info a la derecha. Cuando hay video, el avatar se
+   convierte en una chapa circular superpuesta sobre su esquina — así el
+   video es el protagonista en vez de quedar como un bloque pegado abajo. */
+/* Grid fijo (columna angosta 200-300px) reemplazado por flex: con video,
+   la columna de media pasa a 46% del ancho — video protagonista de
+   verdad, no un thumbnail chico — igual que el resto del rediseño. Sin
+   video, vuelve a un marco de avatar de tamaño fijo. */
+.teacher-grid { display: flex; gap: 44px; align-items: center; }
+@media (max-width: 700px) { .teacher-grid { flex-direction: column; text-align: center; } }
+
+.teacher-info { flex: 1; min-width: 0; }
+.teacher-media { position: relative; display: flex; justify-content: center; flex-shrink: 0; }
+.teacher-media:not(.has-video) { width: 260px; }
+.teacher-media.has-video { display: block; width: 46%; min-width: 300px; }
+@media (max-width: 700px) {
+  .teacher-media:not(.has-video) { width: 220px; }
+  .teacher-media.has-video { width: 100%; min-width: 0; }
+}
+.teacher-video-frame { width: 100%; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-strong); background: #0b1230; }
+/* min-height además del aspect-ratio: red de seguridad para viewports
+   angostos (mobile, donde la columna cae a 100% de ancho pero puede
+   igual ser baja en pantallas cortas). A diferencia de YouTube/Vimeo,
+   un embed de Google Drive no es solo el video: trae su propia barra
+   superior (título/descarga) y necesita más alto absoluto para no
+   verse recortado si el contenedor es muy chico. */
+.teacher-video-frame .ratio { aspect-ratio: 16/9; min-height: 280px; overflow: hidden; }
+.teacher-video-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+.teacher-avatar-frame { position: relative; width: 100%; height: 260px; flex-shrink: 0; }
+.teacher-avatar { width: 100%; height: 100%; border-radius: var(--radius-lg); object-fit: cover; background: var(--gradient-institutional); box-shadow: var(--shadow-strong); }
+.teacher-avatar-frame::after { content: ""; position: absolute; inset: -7px; border-radius: calc(var(--radius-lg) + 7px); border: 2px dashed rgba(11,52,157,0.25); pointer-events: none; }
+@media (max-width: 700px) { .teacher-avatar-frame { height: 220px; } }
+
+/* Con video: el avatar pasa a ser una chapa circular chica sobre la
+   esquina inferior izquierda del video, no un bloque aparte. */
+.teacher-media.has-video .teacher-avatar-frame { position: absolute; left: -12px; bottom: -12px; width: 74px; height: 74px; z-index: 2; }
+.teacher-media.has-video .teacher-avatar { width: 74px; height: 74px; border-radius: 50%; border: 4px solid var(--white); }
+.teacher-media.has-video .teacher-avatar-frame::after { content: none; }
+
+.teacher-name { font-size: 21px; font-weight: 700; color: var(--oxford-blue); margin: 0 0 6px; }
+.teacher-role { color: var(--royal-blue); font-weight: 600; font-size: 12.5px; margin-bottom: 10px; }
+.teacher-bio p { color: var(--text-muted); font-size: 13.3px; margin: 0 0 8px; }
+.teacher-bio p:last-child { margin-bottom: 0; }
+.teacher-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+@media (max-width: 700px) { .teacher-tags { justify-content: center; } .teacher-media.has-video .teacher-avatar-frame { left: 50%; transform: translateX(-50%); bottom: -20px; } }
+.teacher-tag { background: var(--platinum); color: var(--oxford-blue); font-size: 11.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
+.teacher-tag i { color: var(--royal-blue); font-size: 10px; }
+
+/* ---------- Tutorías ----------
+   Ya no es un acordeón de sesiones con grabación/ICS por ítem — ahora es
+   una sola tarjeta: horario semanal recurrente (uno o más bloques "día +
+   hora", el layout se adapta a cualquier cantidad vía flex-wrap) + un
+   único botón al aula virtual (mismo link todas las semanas). El aviso
+   "en vivo ahora"/"próxima sesión" es puro contenido calculado por JS,
+   no interacción — por eso no hay estados is-open/expandible acá. Dos
+   blobs ambiente (mismo lenguaje visual que el hero/Docente) le dan
+   movimiento de fondo sin competir con la tarjeta. */
+.slide#tutorias::before {
+  content: ""; position: absolute; top: -14%; left: -10%; width: 42%; height: 58%;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(101,203,227,.14), rgba(101,203,227,0) 70%);
+  animation: incca-float 15s ease-in-out infinite;
+}
+.slide#tutorias::after {
+  content: ""; position: absolute; bottom: -16%; right: -8%; width: 38%; height: 56%;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(203,181,78,.14), rgba(203,181,78,0) 70%);
+  animation: incca-float2 17s ease-in-out infinite;
+}
+
+.meet-card {
+  position: relative;
+  max-width: 560px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: var(--radius-lg);
+  padding: 44px 32px 32px;
+  text-align: center;
+  box-shadow: 0 30px 70px rgba(2,7,26,.4), inset 0 1px 0 rgba(255,255,255,.14);
+  opacity: 0;
+}
+#meetCard.stagger.is-playing { animation: incca-rise .7s var(--ease-out) both; }
+
+.meet-icon-badge {
+  width: 60px; height: 60px; border-radius: 50%; flex-shrink: 0;
+  margin-top: -66px;
+  background: var(--gradient-gold); color: var(--oxford-blue);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; border: 5px solid var(--oxford-blue);
+  box-shadow: 0 12px 28px rgba(203,181,78,.4);
+}
+
+.meet-schedule-label {
+  font-size: 12px; letter-spacing: 1.8px; text-transform: uppercase; font-weight: 700;
+  color: var(--light-cyan); display: inline-flex; align-items: center; gap: 8px;
+}
+/* flex-wrap + justify-content:center: con 1 bloque queda una sola chip
+   centrada, con varios (p. ej. lunes Y jueves) pasan a envolver en más
+   de una fila, siempre centradas — no hay que tocar nada según la
+   cantidad de bloques que traiga el JSON. */
+.meet-schedule-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; }
+.meet-slot {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: var(--radius-md); padding: 13px 22px; min-width: 150px;
+  box-shadow: 0 8px 18px rgba(2,7,26,.18);
+  transition: transform .25s var(--ease-out), background .25s var(--ease-out), box-shadow .25s var(--ease-out);
+}
+.meet-slot:hover { transform: translateY(-3px); background: rgba(255,255,255,0.11); box-shadow: 0 14px 26px rgba(2,7,26,.28); }
+.meet-slot-day { font-weight: 700; font-size: 14.5px; color: var(--old-gold); display: flex; align-items: center; gap: 6px; }
+.meet-slot-day i { font-size: 12px; }
+.meet-slot-time { font-size: 12.5px; color: var(--platinum); display: flex; align-items: center; gap: 6px; }
+
+.meet-next {
+  font-size: 13px; font-weight: 600; color: var(--platinum);
+  display: inline-flex; align-items: center; gap: 9px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
+  padding: 9px 20px; border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(2,7,26,.2);
+}
+.meet-next--live {
+  color: var(--oxford-blue); background: var(--light-cyan); border-color: transparent; font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(101,203,227,.5), 0 10px 28px rgba(101,203,227,.4);
+}
+@keyframes incca-live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.meet-live-dot { width: 9px; height: 9px; border-radius: 50%; background: #ff5c5c; display: inline-block; animation: incca-live-pulse 1.3s ease-in-out infinite; }
+
+.meet-cta { width: 100%; max-width: 320px; padding: 16px 28px; font-size: 15.5px; animation: incca-pulse-ring 2.8s infinite; }
+.meet-caption { font-size: 12.5px; color: #c9cfe0; max-width: 380px; }
+
+@media (max-width: 480px) {
+  .meet-card { padding: 40px 20px 26px; }
+  .meet-icon-badge { width: 52px; height: 52px; font-size: 19px; margin-top: -58px; }
+  .meet-slot { min-width: 0; width: 100%; }
+}
+
+/* ---------- Presentación del curso ----------
+   Diapositiva propia (antes compartía datos con el DEA, ver dea_* en
+   main.js) pensada como "estreno": título centrado + video grande
+   protagonista, sobre fondo sólido oscuro (on-dark-solid, igual que
+   Tutorías) para que se distinga del DEA (gradiente institucional,
+   video+texto lado a lado) aun siendo las dos diapositivas "de video".
+   Rediseño "premiere" (ver visor final/renovado/presentacion-slide-mejora.html):
+   fondo cinemático en capas (grid + anillos pulsantes + blobs + barrido +
+   viñeta), separador ornamental y marco de video con halo de luz. La capa
+   de fondo es hermana de .slide-body, no hija, por el mismo motivo que
+   .hero-bg-layer más arriba: así cubre toda la diapositiva sin heredar el
+   max-width angosto de la columna de texto ni generar overflow fantasma. */
+.premiere-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.premiere-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+/* transform fijo en la regla base (no solo dentro del @keyframes): el
+   mockup original solo lo fijaba en el 0%/100% del keyframe, así que
+   durante el animation-delay (2.5s / 5s) el anillo se pintaba sin
+   transform — pegado a la esquina superior-izquierda — y "saltaba" al
+   centro recién al arrancar su animación. Bug real del diseño original. */
+.premiere-ring { position: absolute; top: 50%; left: 50%; border-radius: 50%; transform: translate(-50%, -50%); }
+.premiere-ring-1 { width: min(760px, 72vw); height: min(760px, 72vw); border: 1px solid rgba(203,181,78,.18); animation: incca-ring-pulse-a 9s ease-in-out infinite; }
+.premiere-ring-2 { width: min(540px, 52vw); height: min(540px, 52vw); border: 1px solid rgba(43,139,250,.14); animation: incca-ring-pulse-b 9s ease-in-out 2.5s infinite; }
+.premiere-ring-3 { width: min(320px, 32vw); height: min(320px, 32vw); border: 1px solid rgba(203,181,78,.12); animation: incca-ring-pulse-a 9s ease-in-out 5s infinite; }
+@keyframes incca-ring-pulse-a {
+  0%, 100% { opacity: .55; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.025); }
+}
+@keyframes incca-ring-pulse-b {
+  0%, 100% { opacity: .40; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: .80; transform: translate(-50%, -50%) scale(1.03); }
+}
+.premiere-blob { position: absolute; border-radius: 50%; pointer-events: none; }
+.premiere-blob--cyan {
+  top: -20%; left: -12%; width: 50%; height: 72%;
+  background: radial-gradient(circle, rgba(43,139,250,.22), rgba(43,139,250,0) 70%);
+  animation: incca-float 14s ease-in-out infinite;
+}
+.premiere-blob--gold {
+  bottom: -20%; right: -10%; width: 44%; height: 66%;
+  background: radial-gradient(circle, rgba(203,181,78,.22), rgba(203,181,78,0) 70%);
+  animation: incca-float2 16s ease-in-out infinite;
+}
+.premiere-sweep {
+  position: absolute; top: -45%; left: -65%; width: 230%; height: 230%;
+  background: linear-gradient(75deg, transparent 42%, rgba(255,255,255,.045) 49%, transparent 57%);
+  animation: incca-sweep 12s ease-in-out infinite;
+}
+.premiere-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 32%, rgba(4,12,56,.62) 100%); }
+
+.premiere-intro { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; }
+.premiere-intro p { color: var(--platinum); font-size: 14.5px; line-height: 1.6; opacity: .92; margin: 0 0 8px; }
+.premiere-intro p:last-child { margin-bottom: 0; }
+
+/* Separador ornamental entre el título/párrafos y el video */
+.premiere-ornament { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 14px; max-width: 320px; width: 100%; margin: 0 auto; }
+.premiere-ornament-line { flex: 1; height: 1px; }
+.premiere-ornament-line:first-child { background: linear-gradient(to right, transparent, rgba(203,181,78,.52)); }
+.premiere-ornament-line:last-child { background: linear-gradient(to left, transparent, rgba(203,181,78,.52)); }
+.premiere-ornament-icon {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid rgba(203,181,78,.48);
+  background: rgba(203,181,78,.09);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+/* Compensación óptica del triángulo FA-play: pesa visualmente a la
+   izquierda porque el vértice apunta a la derecha — +1px la corrige. */
+.premiere-ornament-icon i { font-size: 9px; color: var(--old-gold); transform: translateX(1px); }
+
+/* Stage: halo de luz (detrás) + marco de video (encima).
+   max-width con techo doble (980px Y calc(vh*16/9)): en pantallas anchas
+   pero de poca altura — el caso real de este deck, que vive en un iframe
+   de 900px fijo (ver embebido en el README) — un video a los 980px de
+   ancho completos empuja el resto del contenido (ornamento, botón "Ir a
+   las unidades") fuera del alto disponible y lo deja tapado detrás de la
+   barra flotante inferior. Atar el ancho al alto del viewport (en vez de
+   min-height en .ratio, que rompería la proporción 16:9 estirando el
+   iframe) deja que ancho Y alto se reduzcan juntos, manteniendo el 16:9
+   real. calc() multiplica vh por un número sin unidad (16/9), válido en
+   CSS estándar. */
+.premiere-stage { position: relative; z-index: 1; max-width: min(980px, calc(50vh * 16 / 9)); width: 100%; margin: 0 auto; }
+.premiere-glow {
+  position: absolute; z-index: 0;
+  bottom: -14px; left: 10%; right: 10%; height: 34px;
+  background: var(--dodger-blue);
+  opacity: .35; filter: blur(38px);
+  border-radius: 50%; pointer-events: none;
+}
+.premiere-frame {
+  position: relative; z-index: 1; width: 100%;
+  background: rgba(255,255,255,.07);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(203,181,78,.30);
+  border-top: 3px solid var(--old-gold);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  box-shadow: 0 40px 90px rgba(2,7,26,.5), 0 14px 32px rgba(2,7,26,.4), inset 0 1px 0 rgba(255,255,255,.12);
+}
+/* min-height con piso real (160px) y techo (300px) en vez del clamp(0px,...)
+   del mockup original — ese piso de 0px era decorativo nada más (28vh no
+   baja de 0 salvo un viewport absurdo), así que no evitaba que el video se
+   viera diminuto en viewports bajos. Con piso de 160px, si no entra entero
+   el sobrante lo resuelve el scroll de .slide-body (mismo criterio que ya
+   usa el resto del deck). */
+.premiere-frame .ratio { aspect-ratio: 16/9; min-height: clamp(160px, 28vh, 300px); border-radius: 12px; overflow: hidden; background: #05102e; }
+.premiere-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+@media (max-width: 768px) {
+  .premiere-grid   { background-size: 36px 36px; }
+  .premiere-ring-1 { width: min(480px, 90vw); height: min(480px, 90vw); }
+  .premiere-ring-2 { width: min(320px, 68vw); height: min(320px, 68vw); }
+  .premiere-ring-3 { width: min(180px, 42vw); height: min(180px, 42vw); }
+  .premiere-frame  { padding: 8px; border-radius: var(--radius-sm); }
+  .premiere-glow   { height: 22px; bottom: -8px; }
+}
+@media (max-width: 480px) {
+  .premiere-grid    { background-size: 28px 28px; }
+  .premiere-ring-1  { width: 90vw; height: 90vw; }
+  .premiere-ring-2  { width: 64vw; height: 64vw; }
+  .premiere-ring-3  { width: 38vw; height: 38vw; }
+  .premiere-ornament { max-width: 240px; }
+  .premiere-frame   { padding: 6px; }
+  .premiere-glow    { display: none; } /* blur pesado en mobile → se omite */
+}
+
+/* ---------- DEA ---------- */
+.dea-grid { display: grid; grid-template-columns: 1fr 0.9fr; gap: 26px; align-items: center; }
+@media (max-width: 760px) { .dea-grid { grid-template-columns: 1fr; } }
+.dea-text p { font-size: 13.5px; opacity: .92; margin: 0 0 10px; }
+.dea-btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 6px; }
+.dea-video-frame { background: rgba(0,0,0,0.2); border-radius: var(--radius-md); padding: 10px; border: 1px solid rgba(255,255,255,0.2); }
+.dea-video-frame .ratio { aspect-ratio: 16/9; border-radius: 9px; overflow: hidden; background: #05102e; }
+.dea-video-frame iframe { width: 100%; height: 100%; border: 0; }
+
+/* Modo alternativo "dea_imagen" (ver renderDea() en main.js) — a
+   propósito SIN el marco oscuro/padding de .dea-video-frame: pensada para
+   un PNG con fondo transparente, cualquier tratamiento de caja detrás
+   (fondo, borde) taparía esa transparencia. Solo un drop-shadow (sigue el
+   canal alfa del PNG, no dibuja un rectángulo como box-shadow) para que
+   no quede plana sobre el degradé oscuro de la diapositiva. */
+.dea-imagen-frame { display: flex; align-items: center; justify-content: center; }
+.dea-imagen-frame img {
+  width: 100%; height: auto; max-height: min(60vh, 520px);
+  object-fit: contain; display: block;
+  filter: drop-shadow(0 24px 40px rgba(2,7,26,.45));
+}
+
+/* ---------- Unidades (acordeón de módulos: CONECTA / INCCA APOYO / Semana N) ----------
+   Reemplaza al antiguo grid de "actividades". El curso entrega un arreglo
+   ORDENADO de módulos (JSON: datos.modulos), indistinguibles entre sí para
+   el diseño — CONECTA, INCCA APOYO y cada Semana se pintan con el mismo
+   componente, solo cambia el nombre. Ya no hay contenido "en la página":
+   cada módulo es un panel de acordeón que, al pulsar su CTA, redirige de
+   verdad (enlace real, target="_blank") a la URL de esa sección en Moodle
+   — no ejecuta lógica adicional, igual que cualquier link normal. */
+/* A pantalla completa: de arriba del todo hasta abajo del todo, sin el
+   padding/max-width/centrado que usa el resto de diapositivas — igual que el
+   hero del visor V2. El z-index de cada panel (para que la punta de
+   flecha de un panel tape la costura del siguiente) se fija inline desde
+   JS (style="z-index:…"), no aquí, porque depende de N (cantidad de
+   módulos), que es dinámica. */
+.slide-fullbleed .slide-body { max-width: none; padding: 0; gap: 0; overflow: hidden; justify-content: stretch; }
+.units-hero { position: relative; display: flex; width: 100%; height: 100%; }
+.unit-panel {
+  position: relative; flex: 1 1 0; min-width: 54px; height: 100%;
+  display: flex; flex-direction: column; container-type: inline-size;
+  border: none; padding: 0; color: var(--white); cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 46px) 0, 100% 50%, calc(100% - 46px) 100%, 0 100%);
+  transition: flex .5s var(--ease-out);
+  margin-left: -46px;
+  /* Color sólido propio (fijo por panel, para que se note la separación
+     y la forma de cada uno), tomado de un punto del degradé institucional
+     claro→oscuro — se fija por JS vía la variable --unit-color, según la
+     posición del módulo (índice/total). La costura dorada de arriba
+     mantiene la identidad azul + dorado uniendo todos los paneles. */
+  background: var(--unit-color, var(--royal-blue));
+  box-shadow: inset 0 4px 0 0 var(--old-gold);
+}
+.unit-panel:first-child { margin-left: 0; }
+.unit-panel:last-child { clip-path: none; }
+.unit-panel.expanded { flex: 6 1 0%; cursor: default; background: linear-gradient(165deg, var(--oxford-blue), #020818 85%); box-shadow: inset 0 0 0 2px rgba(203,181,78,.35); }
+
+.unit-panel-icon { position: absolute; top: 14%; left: 50%; transform: translateX(-50%); font-size: clamp(28px, 26cqw, 100px); color: var(--white); opacity: .95; text-shadow: 0 2px 10px rgba(2,8,24,.55), 0 0 30px rgba(2,8,24,.35); transition: opacity .3s var(--ease-out); }
+.unit-panel-number { position: absolute; top: 14%; left: 50%; transform: translateX(-50%); font-size: clamp(30px, 30cqw, 130px); font-weight: 800; line-height: 1; color: var(--white); opacity: .95; text-shadow: 0 2px 10px rgba(2,8,24,.55), 0 0 30px rgba(2,8,24,.35); transition: opacity .3s var(--ease-out); }
+.unit-panel.expanded .unit-panel-icon, .unit-panel.expanded .unit-panel-number { opacity: 0; }
+
+.unit-footer { position: absolute; left: 0; bottom: 0; z-index: 2; transition: opacity .25s var(--ease-out); }
+.unit-panel.expanded .unit-footer { opacity: 0; pointer-events: none; }
+.unit-footer-shape { background: var(--white); padding: 9px 20px 9px 15px; clip-path: polygon(0 0,100% 0,86% 100%,0 100%); min-width: 100px; }
+.unit-footer-label { color: var(--royal-blue); font-weight: 800; letter-spacing: .02em; font-size: .82rem; white-space: nowrap; }
+
+/* Foto de fondo (temática académica) + velo azul institucional encima —
+   dos capas de background-image: el degradé pinta SOBRE la foto, así el
+   texto sigue siendo legible y el tono combina con el resto del visor. */
+.unit-active-content {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  opacity: 0; pointer-events: none; transition: opacity .35s var(--ease-out) .15s;
+  padding: 64px 6% 54px;
+  background-image: linear-gradient(165deg, rgba(4,12,56,.9), rgba(4,12,56,.88) 55%, rgba(2,8,24,.96)), url("https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=60&auto=format&fit=crop");
+  background-size: cover;
+  background-position: center;
+}
+.unit-panel.expanded .unit-active-content { opacity: 1; pointer-events: auto; }
+.unit-watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; pointer-events: none; z-index: 0; }
+.unit-watermark span { font-size: clamp(40px,8vw,130px); font-weight: 800; color: var(--white); opacity: .07; white-space: nowrap; letter-spacing: .02em; }
+
+.unit-tag { position: relative; z-index: 1; align-self: flex-start; background: var(--gradient-gold); color: var(--oxford-blue); font-weight: 800; letter-spacing: .06em; font-size: .78rem; padding: 7px 16px; border-radius: 2px 8px 2px 8px; }
+.unit-title { position: relative; z-index: 1; color: var(--white); font-weight: 700; margin-top: 16px; font-size: clamp(1.5rem,3.6vw,2.8rem); line-height: 1.14; max-width: 65%; }
+.unit-illustration { position: relative; z-index: 1; flex: 1 1 auto; display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }
+.unit-illustration svg, .unit-illustration img { width: 100%; height: 100%; max-width: 320px; max-height: 100%; object-fit: contain; filter: drop-shadow(0 14px 30px rgba(2,8,24,.45)); }
+/* Respaldo cuando la imagen no carga inline (ver el onerror en main.js) —
+   mismo estilo "ghost" que .btn-ghost, pensado para el fondo oscuro de
+   .unit-active-content. */
+.unit-illustration-fallback {
+  display: inline-flex; align-items: center; gap: 10px;
+  color: var(--white); text-decoration: none; font-weight: 700; font-size: .95rem;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3);
+  padding: 14px 24px; border-radius: 999px;
+  transition: background .2s, transform .2s;
+}
+.unit-illustration-fallback:hover { background: rgba(255,255,255,.2); transform: translateY(-2px); }
+.unit-illustration-fallback i { color: var(--old-gold); font-size: 1.1em; }
+
+.unit-cta { position: relative; z-index: 1; align-self: flex-start; text-decoration: none; display: flex; align-items: center; gap: 12px; color: var(--white); font-weight: 700; font-size: 1rem; }
+.unit-cta-arrow { width: 42px; height: 42px; border-radius: 50%; background: var(--gradient-gold); color: var(--oxford-blue); display: flex; align-items: center; justify-content: center; font-size: 14px; transition: transform .25s var(--ease-out); flex-shrink: 0; }
+.unit-cta:hover .unit-cta-arrow { transform: translateX(5px); }
+
+.activity-empty { grid-column: 1 / -1; text-align: center; padding: 30px 16px; color: var(--text-muted); }
+.activity-empty i { font-size: 24px; color: var(--platinum); margin-bottom: 10px; display: block; }
+
+@media (max-width: 760px) {
+  .units-hero { flex-direction: column; }
+  .unit-panel {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), 50% 100%, 0 calc(100% - 22px));
+    margin: -22px 0 0 0 !important;
+    flex: 1; min-width: 0;
+    box-shadow: inset 4px 0 0 0 var(--old-gold);
+  }
+  .unit-panel:first-child { margin-top: 0 !important; }
+  .unit-panel:last-child { clip-path: none; }
+  .unit-panel.expanded { flex: 8; box-shadow: inset 0 0 0 2px rgba(203,181,78,.35); }
+  /* Apiladas, cada franja es un "home plate" (rectángulo con la punta
+     apuntando hacia abajo, ver el clip-path de arriba): la franja de
+     ARRIBA se solapa 22px sobre el centro de ESTA, justo donde el ícono
+     quedaba centrado con top:14px — por eso se veía tapado. Centrarlo en
+     el 58% (un poco más abajo de la mitad) lo saca de esa zona de
+     solape sin pegarlo a la chapa del nombre, que está anclada abajo. */
+  .unit-panel-icon, .unit-panel-number { top: 58%; left: 50%; transform: translate(-50%, -50%); font-size: 22px; }
+  .unit-footer { bottom: 22px; padding-bottom: 4px; }
+  .unit-footer-shape { padding: 6px 14px 6px 11px; min-width: 80px; }
+  .unit-footer-label { font-size: .7rem; }
+  .unit-active-content { padding: 30px 7% 24px; }
+  .unit-title { max-width: 100%; font-size: 1.3rem; }
+  .unit-illustration svg { max-width: 58vw; }
+}
+
+/* ==========================================================================
+   ACTIVIDADES (datos.recursos) — actividades del curso que viven FUERA de
+   los mosaicos. Cada recurso "actividades" es su propia diapositiva.
+   cuerpoActividades() elige el diseño por cantidad de ítems:
+     · 2+  → .act-list         ("ruta": filas sobre una línea de tiempo)
+     · 1   → .act-list--single  (tarjeta protagonista con botones grandes)
+   Color/ícono/etiqueta por tipo via data-type (--act-color / --act-grad).
+   INTERACCIÓN: la fila (o el botón "Ver la actividad" en modo single) abre
+   la descripción en el MODAL de pantalla completa — sin acordeón inline.
+   Entrada escalonada por --act-i, atada a .slide.is-active.
+   ========================================================================== */
+.act-wrap { --act-bounce: cubic-bezier(.34,1.56,.64,1); }
+
+.act-list { position: relative; display: flex; flex-direction: column; gap: 16px; max-width: 900px; }
+
+.act {
+  --act-grad: linear-gradient(120deg, var(--dodger-blue), var(--royal-blue));
+  --act-color: var(--royal-blue);
+  position: relative; display: flex; gap: 16px; align-items: flex-start;
+  opacity: 1;
+}
+.act[data-type="quiz"]    { --act-grad: linear-gradient(120deg, #9333ea, #c026d3); --act-color: #8b2fd6; }
+.act[data-type="tarea"]   { --act-grad: linear-gradient(120deg, #0e7490, #06b6d4); --act-color: #0e7490; }
+.act[data-type="foro"]    { --act-grad: linear-gradient(120deg, #ea580c, #f97316); --act-color: #d9540e; }
+.act[data-type="taller"]  { --act-grad: linear-gradient(120deg, #15803d, #22c55e); --act-color: #15803d; }
+.act[data-type="entrega"] { --act-grad: linear-gradient(120deg, var(--bronze), var(--old-gold)); --act-color: var(--bronze); }
+.act[data-type="examen"]  { --act-grad: linear-gradient(120deg, #dc2626, #f43f5e); --act-color: #dc2626; }
+
+.slide.is-active .act {
+  animation: act-in .55s var(--ease-out) both;
+  animation-delay: calc(min(var(--act-i, 0), 9) * 60ms + .1s);
+}
+@keyframes act-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+/* Línea de tiempo que "cae" al entrar la diapositiva */
+.act-line {
+  position: absolute; left: 24px; top: 12px; bottom: 12px; width: 3px;
+  border-radius: 2px; transform-origin: top;
+  background: linear-gradient(to bottom, var(--old-gold), var(--light-cyan) 45%, rgba(101,203,227,0));
+}
+.slide.is-active .act-line { animation: act-line-draw .9s var(--ease-out) .1s both; }
+@keyframes act-line-draw { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+/* Nodo numerado — se pinta con el color del tipo al pasar el cursor */
+.act-node {
+  position: relative; z-index: 1; flex: 0 0 auto;
+  width: 50px; height: 50px; border-radius: 15px; display: grid; place-items: center;
+  background: var(--white); color: var(--act-color);
+  font-weight: 800; font-size: 15px;
+  box-shadow: 0 6px 16px rgba(4,12,56,.14), inset 0 0 0 1.5px rgba(4,12,56,.05);
+  transition: transform .4s var(--act-bounce), background .35s var(--ease-out), color .35s var(--ease-out), box-shadow .35s var(--ease-out);
+}
+.act-node::before {
+  content: ''; position: absolute; inset: -3px; border-radius: 18px;
+  border: 2px solid var(--act-color); opacity: .22;
+  transition: opacity .35s var(--ease-out), transform .35s var(--ease-out);
+}
+.act:hover .act-node {
+  background: var(--act-grad); color: var(--white);
+  transform: translateY(-2px) scale(1.05); box-shadow: 0 14px 30px rgba(4,12,56,.24);
+}
+.act:hover .act-node::before { opacity: 0; transform: scale(1.12); }
+
+/* Tarjeta */
+.act-card {
+  position: relative; flex: 1 1 auto; min-width: 0;
+  background: var(--white); border-radius: 16px; overflow: hidden;
+  box-shadow: 0 6px 18px rgba(4,12,56,.09);
+  transition: box-shadow .3s var(--ease-out), transform .3s var(--ease-out);
+  border: 1px solid rgba(4,12,56,.05);
+}
+.act:hover .act-card { transform: translateX(4px); box-shadow: 0 14px 32px rgba(4,12,56,.15); }
+.act-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--act-grad); }
+.act-glyph { display: none; }
+
+.act-row { display: flex; align-items: stretch; gap: 4px; }
+
+/* Zona del nombre: botón (abre el modal) o bloque estático */
+.act-open, .act-static {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  padding: 14px 12px 14px 20px; text-align: left;
+}
+.act-open { background: none; border: none; }
+.act-type {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 11px 3px 8px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--white); background: var(--act-color);
+}
+.act-type i { font-size: 10px; }
+.act-headline { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; width: 100%; }
+.act-nombre { font-weight: 700; font-size: 15.5px; color: var(--oxford-blue); line-height: 1.4; }
+.act-open-hint {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 700; color: var(--act-color);
+  opacity: .75; transition: opacity .25s var(--ease-out), transform .25s var(--ease-out);
+}
+.act-open-hint i { font-size: 10px; }
+.act:hover .act-open-hint { opacity: 1; transform: translateX(2px); }
+
+.act-go {
+  flex: 0 0 auto; align-self: center;
+  width: 42px; height: 42px; margin: 8px 12px 8px 2px;
+  display: grid; place-items: center; border-radius: 12px;
+  background: var(--act-grad); color: var(--white); font-size: 13px; text-decoration: none;
+  box-shadow: 0 6px 16px rgba(4,12,56,.18);
+  transition: transform .3s var(--act-bounce), box-shadow .3s var(--ease-out);
+}
+.act-go:hover { transform: translateY(-3px) scale(1.06); color: var(--white); box-shadow: 0 12px 24px rgba(4,12,56,.26); }
+.act-go:active { transform: translateY(-1px) scale(1.02); }
+
+/* Botones del modo "una sola actividad" */
+.act-actions { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 26px 24px; }
+.act-see {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px; border-radius: 999px;
+  font-size: 13.5px; font-weight: 700;
+  border: 1.5px solid var(--act-color); background: none; color: var(--act-color);
+  transition: transform .2s var(--ease-out), box-shadow .2s var(--ease-out), background .2s var(--ease-out);
+}
+.act-see:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+.act-cta {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 11px 12px 11px 22px; border-radius: 999px;
+  background: var(--act-grad); color: var(--white); text-decoration: none;
+  font-weight: 700; font-size: 13.5px;
+  box-shadow: 0 12px 26px rgba(4,12,56,.2);
+  transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out);
+}
+.act-cta:hover { transform: translateY(-2px); color: var(--white); box-shadow: 0 18px 34px rgba(4,12,56,.28); }
+.act-cta-arrow {
+  width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255,255,255,.22); font-size: 11px; transition: transform .25s var(--ease-out);
+}
+.act-cta:hover .act-cta-arrow { transform: translateX(3px); }
+
+/* ── Modo actividad única — tarjeta protagonista ─────────────────────── */
+.act-list--single { gap: 0; max-width: 820px; }
+.act-list--single .act { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+.act-list--single .act-node { position: relative; z-index: 3; margin: 0 0 -40px 22px; width: 72px; height: 72px; border-radius: 22px; font-size: 26px; }
+.act-list--single .act-card { align-self: stretch; border-radius: 24px; box-shadow: 0 22px 50px rgba(4,12,56,.16); }
+.act-list--single .act:hover .act-card { transform: none; }
+.act-list--single .act-accent { width: 6px; }
+.act-list--single .act-glyph {
+  display: block; position: absolute; right: -14px; bottom: -26px; z-index: 0;
+  font-size: 150px; line-height: 1; color: var(--act-color); opacity: .06; pointer-events: none;
+}
+.act-list--single .act-row { position: relative; z-index: 1; padding-top: 46px; }
+.act-list--single .act-static { padding: 4px 24px 10px 26px; gap: 12px; }
+.act-list--single .act-type { font-size: 11px; padding: 4px 13px 4px 9px; }
+.act-list--single .act-nombre { font-size: clamp(1.2rem, 2.6vw, 1.55rem); font-weight: 800; line-height: 1.25; }
+.act-list--single .act-actions { position: relative; z-index: 1; }
+
+/* Descripción de la actividad dentro del modal de pantalla completa.
+   Con .act-modal-html el modal deja de ser una caja de alto fijo (pensada
+   para video/iframe) y crece con el contenido, hasta un tope; el scroll
+   pasa a .media-modal-body. */
+.media-modal:has(.act-modal-html) { height: auto; max-height: min(86vh, 720px); }
+.media-modal-body:has(.act-modal-html) { flex: 0 1 auto; overflow-y: auto; background: var(--white); }
+.act-modal-html { padding: 20px 24px 60px; background: var(--white); color: var(--text-body); font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
+.act-modal-html--texto { font-size: 15.5px; }
+.act-modal-html :is(h1, h2, h3, h4) { margin: 0 0 12px; color: var(--oxford-blue); }
+.act-modal-html p { margin: 0 0 14px; }
+.act-modal-html p:last-child { margin-bottom: 0; }
+.act-modal-html :is(ul, ol) { margin: 0 0 14px; padding-left: 22px; }
+.act-modal-html li { margin-bottom: 6px; }
+.act-modal-html a { color: var(--royal-blue); text-decoration: underline; }
+.act-modal-html strong { color: var(--oxford-blue); }
+.act-modal-html img { max-width: 100%; height: auto; border-radius: var(--radius-sm); margin: 10px 0; }
+.act-modal-html table { max-width: 100%; border-collapse: collapse; }
+.act-modal-go {
+  position: absolute; right: 26px; bottom: 22px; z-index: 5;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px; border-radius: 999px;
+  background: var(--gradient-institutional); color: var(--white); text-decoration: none;
+  font-weight: 700; font-size: 13.5px; box-shadow: 0 14px 30px rgba(4,12,56,.4);
+  transition: transform .2s var(--ease-out);
+}
+.act-modal-go:hover { transform: translateY(-2px); color: var(--white); }
+
+/* Badge del CTA "Ir a actividades" del hero */
+.btn-pill-badge {
+  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--old-gold), #e8d066); color: var(--oxford-blue);
+  font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; margin-left: 2px;
+}
+
+@media (max-width: 620px) {
+  .act-list { gap: 14px; }
+  .act-line { left: 18px; }
+  .act { gap: 12px; }
+  .act-node { width: 40px; height: 40px; border-radius: 12px; font-size: 13px; }
+  .act-node::before { inset: -3px; border-radius: 15px; }
+  .act-open, .act-static { padding: 12px 10px 12px 14px; gap: 7px; }
+  .act-nombre { font-size: 14.5px; }
+  .act-go { width: 38px; height: 38px; margin: 8px 8px 8px 2px; }
+  .act-actions { padding-left: 16px; padding-right: 16px; }
+  .act-list--single .act-node { margin: 0 0 -30px 16px; width: 56px; height: 56px; border-radius: 18px; font-size: 17px; }
+  .act-list--single .act-row { padding-top: 36px; }
+  .act-list--single .act-static { padding-left: 18px; }
+  .act-list--single .act-glyph { font-size: 108px; right: -10px; bottom: -18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide.is-active .act, .slide.is-active .act-line { animation-delay: 0s; }
+}
+
+/* ---------- Diapositivas custom (datos.diapositivas_extra) ----------
+   Tipo "pagina": el iframe/html ocupa toda la diapositiva (misma clase
+   .slide-fullbleed que usa Unidades). Tipo "media": diapositiva normal
+   con título/descripción + el contenido en un marco contenido, con botón
+   para abrirlo en el modal de pantalla completa de abajo. */
+.custom-page { position: relative; width: 100%; height: 100%; overflow: auto; background: var(--white); }
+.custom-page iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+.custom-media-frame {
+  position: relative; flex: 1; min-height: 240px;
+  border-radius: var(--radius-md); overflow: hidden;
+  background: var(--platinum); box-shadow: 0 6px 16px rgba(4,12,56,0.06);
+  border: 1px solid rgba(4,12,56,0.08);
+}
+.custom-media-frame iframe { width: 100%; height: 100%; min-height: 320px; border: 0; display: block; }
+.custom-media-expand {
+  position: absolute; top: 12px; right: 12px; width: 38px; height: 38px;
+  border-radius: 50%; border: none; background: rgba(4,12,56,.55); color: var(--white);
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  transition: background .2s, transform .2s;
+}
+.custom-media-expand:hover { background: var(--oxford-blue); transform: scale(1.06); }
+
+/* ---------- Modal de pantalla completa (diapositivas custom tipo "media") ---------- */
+.media-modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(4,12,56,.85); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; padding: 4vh 3vw;
+  opacity: 0; pointer-events: none; transition: opacity .25s var(--ease-out);
+}
+.media-modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+.media-modal {
+  width: min(1100px, 100%); height: min(86vh, 720px); max-height: 92vh;
+  background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-strong);
+  padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; position: relative;
+  transform: scale(.96); transition: transform .25s var(--ease-out);
+}
+.media-modal-overlay.is-open .media-modal { transform: scale(1); }
+.media-modal-close {
+  position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%;
+  border: none; background: var(--platinum); color: var(--oxford-blue);
+  display: flex; align-items: center; justify-content: center; font-size: 13px; z-index: 1;
+}
+.media-modal-close:hover { background: var(--light-cyan); }
+.media-modal-title { font-size: clamp(1.1rem, 2.2vw, 1.5rem); font-weight: 700; color: var(--oxford-blue); padding-right: 40px; }
+.media-modal-descripcion { color: var(--text-muted); font-size: 13.5px; }
+.media-modal-body { flex: 1; min-height: 0; border-radius: var(--radius-sm); overflow: hidden; background: var(--platinum); }
+.media-modal-body iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+@media (max-width: 620px) {
+  .media-modal { padding: 16px; height: min(88vh, 640px); }
+}
+
+/* ---------- Short-viewport tweaks ---------- */
+@media (max-height: 620px) {
+  :root { --chrome-bottom: 74px; }
+  .deck-floatnav { bottom: 10px; }
+  .hero-badges, .hero-eyebrow { margin-bottom: 2px; }
+  .hero-stack { gap: 12px; }
+  .hero-title { -webkit-line-clamp: 1; }
+  .hero-desc { -webkit-line-clamp: 2; }
+  .hero-panel { padding: 12px 16px 14px; gap: 8px; }
+  .stat-grid { grid-template-columns: repeat(auto-fit, minmax(58px, 1fr)); gap: 6px; }
+  .stat-tile { padding: 6px 4px; gap: 3px; }
+  .stat-tile-icon { width: 22px; height: 22px; font-size: 10px; }
+  .stat-num { font-size: 14px; }
+  .stat-label { font-size: 7.5px; }
+  .premiere-ornament { display: none; } /* sacrifica el ornamento en landscape comprimido */
+  .premiere-intro { display: none; } /* ídem los párrafos introductorios: el título alcanza */
+  .premiere-stage { max-width: min(980px, calc(38vh * 16 / 9)); }
+  .premiere-frame { padding: 8px; }
+  .premiere-frame .ratio { min-height: 110px; }
+}
+
+.text-center { text-align: center; }

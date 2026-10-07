@@ -209,6 +209,8 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function texto(s) { return esc(decodificar(s)); }
+  // Un texto sin ninguna letra ni numero (".", "-", espacios) cuenta como vacio.
+  function tieneTexto(s) { return /[\p{L}\p{N}]/u.test(decodificar(s)); }
   // Solo http(s), rutas relativas y anclas; cualquier otro esquema
   // (javascript:, data:, vbscript:) se convierte en "#".
   function urlSegura(u) {
@@ -345,7 +347,7 @@
       case "dea":
         return Boolean(datos.dea_video || datos.dea_imagen || datos.dea_titulo || datos.dea_parrafos.length);
       case "bienvenida":
-        return Boolean((datos.bienvenida.parrafos || []).length || datos.bienvenida.frase_destacada);
+        return Boolean((datos.bienvenida.parrafos || []).length || tieneTexto(datos.bienvenida.frase_destacada));
       case "aprenderas":
         return Boolean(datos.aprenderas.length || (datos.aprenderas_texto || []).length);
       case "docente":
@@ -671,13 +673,16 @@
     // la diapositiva o el elemento se oculta -- antes un curso real sin
     // video mostraba el video de ejemplo y "Ejemplo de resumen...".
     const ejemplo = (campo, vacio) => (sinNingunDato ? SIN_DATOS[campo] : vacio);
-    const cadena = (valor, campo) => ((typeof valor === "string" && valor.trim() !== "") ? valor : ejemplo(campo, ""));
-    const lista = (valor, campo) => (Array.isArray(valor) ? valor.filter((x) => x !== null && x !== "") : ejemplo(campo, []));
+    const cadena = (valor, campo) => ((typeof valor === "string" && tieneTexto(valor)) ? valor : ejemplo(campo, ""));
+    // Listas: se descartan los vacios y los textos sin letras (un "." suelto no es un parrafo).
+    const lista = (valor, campo) => (Array.isArray(valor)
+      ? valor.filter((x) => x !== null && x !== "" && (typeof x !== "string" || tieneTexto(x)))
+      : ejemplo(campo, []));
     const numero = (valor, campo) => (Number.isFinite(valor) ? valor : ejemplo(campo, 0));
     const docenteVacio = { nombre: "", foto: "", rol: "", bio: [], etiquetas: [], video: "" };
     const docente = (valor, base) => {
       const d = Object.assign({}, base, (valor && typeof valor === "object") ? valor : {});
-      d.bio = Array.isArray(d.bio) ? d.bio.filter(Boolean) : [];
+      d.bio = Array.isArray(d.bio) ? d.bio.filter(tieneTexto) : [];
       d.etiquetas = Array.isArray(d.etiquetas) ? d.etiquetas.filter((t) => t && t.texto) : [];
       return d;
     };
@@ -709,7 +714,7 @@
       bienvenida: (function () {
         const b = Object.assign({}, sinNingunDato ? SIN_DATOS.bienvenida : { titulo: "", parrafos: [], frase_destacada: "" },
           (recibidos.bienvenida && typeof recibidos.bienvenida === "object") ? recibidos.bienvenida : {});
-        b.parrafos = Array.isArray(b.parrafos) ? b.parrafos.filter(Boolean) : [];
+        b.parrafos = Array.isArray(b.parrafos) ? b.parrafos.filter(tieneTexto) : [];
         return b;
       })(),
       aprenderas: lista(recibidos.aprenderas, "aprenderas").filter((a) => a && (a.titulo || a.detalle)),
@@ -717,7 +722,7 @@
       // sin placeholder propio a propósito: su ausencia simplemente
       // significa "usar el modo de tarjetas de siempre" (que sí tiene su
       // propio placeholder completo, ver "aprenderas" arriba).
-      aprenderas_texto: (Array.isArray(recibidos.aprenderas_texto) && recibidos.aprenderas_texto.length) ? recibidos.aprenderas_texto : null,
+      aprenderas_texto: (Array.isArray(recibidos.aprenderas_texto) && recibidos.aprenderas_texto.some(tieneTexto)) ? recibidos.aprenderas_texto.filter(tieneTexto) : null,
       aprenderas_imagen: recibidos.aprenderas_imagen || "",
       tutorias: normalizarTutorias(recibidos, sinNingunDato),
       modulos: (Array.isArray(recibidos.modulos) ? recibidos.modulos : ejemplo("modulos", [])).filter(Boolean).map((m, i) => ({
@@ -1089,7 +1094,7 @@
   // Se usa para el docente creador (siempre presente) y el docente tutor
   // (solo si el JSON trae "profesor_tutor") — misma tarjeta, mismos ids
   // con prefijo distinto ("teacher"/"tutor") en el HTML de cada slide.
-  const parrafosHtml = (lista) => (lista || []).filter(Boolean).map((p) => `<p>${texto(p)}</p>`).join("");
+  const parrafosHtml = (lista) => (lista || []).filter(tieneTexto).map((p) => `<p>${texto(p)}</p>`).join("");
 
   function renderTeacherCard(idPrefix, profesor) {
     const avatar = $(`#${idPrefix}Avatar`);
@@ -1144,7 +1149,7 @@
     // Bienvenida — con frase_destacada se muestra la .quote-card de
     // siempre; sin ella, en vez de dejar la columna derecha vacía se
     // muestra la escena de figuras geométricas (ver initWelcomeGeo()).
-    const tieneFrase = !!datos.bienvenida.frase_destacada;
+    const tieneFrase = tieneTexto(datos.bienvenida.frase_destacada);
     $("#bienvenidaTitulo").textContent = decodificar(datos.bienvenida.titulo) || "¡Bienvenidos al curso!";
     $("#bienvenidaParrafos").innerHTML = parrafosHtml(datos.bienvenida.parrafos);
     $("#bienvenidaFrase").textContent = decodificar(datos.bienvenida.frase_destacada);

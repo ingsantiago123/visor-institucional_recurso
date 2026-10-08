@@ -44,21 +44,28 @@
   // Paletas por tono de escena. Oscuro: inicio, presentacion, tutorias,
   // unidades (#2B8BFA, #18D1E8, #65CBE3, #00FFE7 de la propuesta). Claro:
   // "aprenderas", bienvenida y DEA (#2B8BFA, #65CBE3, #0B349D).
+  // Cada nodo lleva un halo del color CONTRARIO al fondo (azul noche en las
+  // escenas oscuras, blanco en las claras): se distingue igual sobre la
+  // parte lisa del velo que sobre la foto. En las claras los nodos y las
+  // lineas son azules oscuros (sobre blanco el cian no se ve).
   const PALETAS = {
     oscuro: {
       puntos: [[43, 139, 250], [24, 209, 232], [101, 203, 227], [0, 255, 231]],
-      linea: [24, 209, 232], aLinea: 0.24, aPunto: 1, aRaton: 0.62, pulso: [101, 203, 227]
+      linea: [24, 209, 232], aLinea: 0.26, aPunto: 1, aRaton: 0.62, pulso: [101, 203, 227],
+      halo: [4, 11, 60], aHalo: 0.5
     },
     claro: {
-      puntos: [[43, 139, 250], [101, 203, 227], [11, 52, 157], [0, 190, 214]],
-      linea: [43, 139, 250], aLinea: 0.2, aPunto: 0.9, aRaton: 0.42, pulso: [43, 139, 250]
+      puntos: [[11, 52, 157], [27, 59, 90], [43, 139, 250], [4, 11, 60]],
+      linea: [11, 52, 157], aLinea: 0.34, aPunto: 1.25, aRaton: 0.55, pulso: [43, 139, 250],
+      halo: [255, 255, 255], aHalo: 0.75
     }
   };
   const ORO = [203, 181, 78];
 
   const copiarPaleta = (p) => ({
     puntos: p.puntos.map((c) => c.slice()), linea: p.linea.slice(),
-    aLinea: p.aLinea, aPunto: p.aPunto, aRaton: p.aRaton, pulso: p.pulso.slice()
+    aLinea: p.aLinea, aPunto: p.aPunto, aRaton: p.aRaton, pulso: p.pulso.slice(),
+    halo: p.halo.slice(), aHalo: p.aHalo
   });
   const mezclar = (a, b, t) => a + (b - a) * t;
   const mezclarColor = (a, b, t) => [mezclar(a[0], b[0], t), mezclar(a[1], b[1], t), mezclar(a[2], b[2], t)];
@@ -140,7 +147,9 @@
           aLinea: mezclar(desde.aLinea, hacia.aLinea, t),
           aPunto: mezclar(desde.aPunto, hacia.aPunto, t),
           aRaton: mezclar(desde.aRaton, hacia.aRaton, t),
-          pulso: mezclarColor(desde.pulso, hacia.pulso, t)
+          pulso: mezclarColor(desde.pulso, hacia.pulso, t),
+          halo: mezclarColor(desde.halo, hacia.halo, t),
+          aHalo: mezclar(desde.aHalo, hacia.aHalo, t)
         };
       }
       for (const p of P) {
@@ -241,6 +250,22 @@
         const a = 0.5 + 0.5 * Math.sin(p.fa);
         grupos[p.c * NA + Math.min(NA - 1, (a * NA) | 0)].push(p);
       }
+      // Halos de contraste: un solo relleno por nivel de opacidad.
+      for (let g = 0; g < NA; g++) {
+        ctx.beginPath();
+        let hay = false;
+        for (let c = 0; c < 4; c++) {
+          for (const p of grupos[c * NA + g]) {
+            const r = 1.9 + (p.rMax - 0.55) * (0.5 + 0.5 * Math.sin(p.fr));
+            ctx.moveTo(p.x + r, p.y);
+            ctx.arc(p.x, p.y, r, 0, TAU);
+            hay = true;
+          }
+        }
+        if (!hay) continue;
+        ctx.fillStyle = rgba(paleta.halo, paleta.aHalo * (0.35 + 0.65 * (g + 0.5) / NA));
+        ctx.fill();
+      }
       for (let c = 0; c < 4; c++) {
         for (let g = 0; g < NA; g++) {
           const gr = grupos[c * NA + g];
@@ -251,7 +276,7 @@
             ctx.moveTo(p.x + r, p.y);
             ctx.arc(p.x, p.y, r, 0, TAU);
           }
-          ctx.fillStyle = rgba(paleta.puntos[c], (0.16 + 0.42 * (g + 0.5) / NA) * paleta.aPunto);
+          ctx.fillStyle = rgba(paleta.puntos[c], Math.min(1, (0.2 + 0.5 * (g + 0.5) / NA) * paleta.aPunto));
           ctx.fill();
         }
       }

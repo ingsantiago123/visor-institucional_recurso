@@ -40,7 +40,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "3.0.0";
+  const VERSION = "3.1.0";
   const $ = (sel, ctx) => (ctx || document).querySelector(sel);
   const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
   const reducido = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -441,7 +441,7 @@
       modulos: (Array.isArray(recibidos.modulos) ? recibidos.modulos : ejemplo("modulos", [])).filter(Boolean).map((m, i) => ({
         nombre: m.nombre || (sinNingunDato ? SIN_DATOS_MODULO.nombre : `Módulo ${i + 1}`),
         url: m.url || SIN_DATOS_MODULO.url,
-        ilustracion: m.ilustracion || inferirIlustracion(m.nombre) || "",
+        ilustracion: m.ilustracion || "",
         sectionid: m.sectionid || null
       })),
       secciones: (recibidos.secciones && typeof recibidos.secciones === "object") ? recibidos.secciones : {},
@@ -723,7 +723,7 @@
   const ESCENAS = {
     inicio: { base: "noche", tono: "oscuro", velo: "inicio", ranura: "hero", red: true },
     presentacion: { base: "noche", tono: "oscuro", velo: "presentacion", ranura: "presentacion", red: true },
-    bienvenida: { base: "gris", tono: "claro", velo: "claro-izq", ranura: "bienvenida", red: true },
+    bienvenida: { base: "noche", tono: "oscuro", velo: "bienvenida", ranura: "bienvenida", red: true },
     aprenderas: { base: "gris", tono: "claro", velo: "claro-izq", ranura: "aprenderas", red: true },
     dea: { base: "gris", tono: "claro", velo: "claro-der", ranura: "dea", red: true },
     docente: { base: "docente", tono: "oscuro", velo: "docente", ranura: "docente", ondas: true, vineta: true, soloPropia: true },
@@ -951,7 +951,7 @@
       $("#deckAnuncio").textContent = `Diapositiva ${this.actual + 1} de ${this.total}: ${s.label}`;
     },
     extras(id) {
-      if (id === "hero") { animarContadores($("#hero")); revisarResumen(); }
+      if (id === "hero") animarContadores($("#hero"));
       if (id === "tutorias") paso("tutorias_estado", actualizarEstadoTutorias);
     }
   };
@@ -1037,10 +1037,6 @@
     r.textContent = resumen;
     $("#heroResumenCaja").hidden = !resumen;
     if (resumen.length > 380) r.dataset.largo = "largo"; else if (resumen.length > 230) r.dataset.largo = "medio";
-    $("#heroLeerMas").addEventListener("click", (e) => abrirContenido({
-      titulo: nombre,
-      html: resumen.split(/\n{2,}/).map((p) => `<p>${esc(p)}</p>`).join("")
-    }, e.currentTarget));
 
     const insignias = datos.insignias || [];
     const caja = $("#heroInsignias");
@@ -1049,15 +1045,6 @@
     caja.hidden = !insignias.length;
 
     renderFicha(datos);
-  }
-
-  // "Leer mas" solo si el resumen de verdad quedo cortado (se mide con las
-  // fuentes ya cargadas y en cada cambio de tamano).
-  function revisarResumen() {
-    const r = $("#heroResumen");
-    const btn = $("#heroLeerMas");
-    if (!r || !btn || !r.textContent) return;
-    btn.hidden = !(r.scrollHeight > r.clientHeight + 2);
   }
 
   // Ficha del curso: solo cifras mayores que 0 (una ficha en 0 no informa nada).
@@ -1123,7 +1110,13 @@
   function renderBienvenida(datos) {
     const b = datos.bienvenida;
     $("#bienvenidaTitulo").textContent = decodificar(b.titulo).trim() || "¡Bienvenidos al curso!";
-    $("#bienvenidaParrafos").innerHTML = parrafosHtml(b.parrafos, 0.24, 0.1);
+    $("#bienvenidaParrafos").innerHTML = parrafosHtml(b.parrafos, 0.45, 0.1);
+    // Sin parrafos no hay carta: titulo, frase y sello ocupan el ancho.
+    $("#bienvenidaCarta").hidden = !b.parrafos.length;
+    // Letra capital solo si el texto empieza con letra (con "¡" o comillas se veria rara).
+    const primero = $("#bienvenidaParrafos p");
+    if (primero && /^\p{L}/u.test(primero.textContent)) primero.classList.add("capitular");
+    $("#bienvenida").classList.toggle("sin-carta", !b.parrafos.length);
     const frase = decodificar(b.frase_destacada).trim();
     $("#bienvenidaFrase").textContent = frase;
     $("#bienvenidaCita").hidden = !tieneTexto(frase);
@@ -1325,14 +1318,23 @@
     if (n.includes("semana") && num) return { number: num[1] };
     return { icon: "fa-layer-group" };
   }
-  // Ilustraciones estandar que trae el visor para los modulos tipicos.
-  function inferirIlustracion(nombre) {
+  // Emblema generado para una unidad sin ilustracion (o cuya imagen no carga):
+  // numero de la semana (cualquier N), icono de CONECTA / APOYO o "Unidad N",
+  // en el mismo estilo del visor. Nunca un recuadro roto ni un enlace suelto.
+  function emblemaUnidad(nombre, i) {
+    const meta = unitVisualMeta(nombre);
     const n = (nombre || "").toLowerCase();
-    if (n.includes("conecta")) return "./assets/img/unidades/conecta.webp";
-    if (n.includes("apoyo")) return "./assets/img/unidades/apoyo.webp";
-    const semana = n.match(/semana\s*([1-4])\b/);
-    if (semana) return `./assets/img/unidades/semana${semana[1]}.webp`;
-    return "";
+    const tipo = meta.number ? "semana" : n.includes("conecta") ? "conecta" : n.includes("apoyo") ? "apoyo" : "unidad";
+    const etiqueta = { semana: "Semana", conecta: "Conecta", apoyo: "Apoyo", unidad: "Unidad" }[tipo];
+    const numero = meta.number || (tipo === "unidad" ? String(i + 1) : "");
+    const centro = numero
+      ? `<span class="emblema-num">${esc(numero.padStart(2, "0"))}</span>`
+      : `<i class="fa-solid ${meta.icon}"></i>`;
+    return `<div class="emblema-unidad" data-tipo="${tipo}" aria-hidden="true">
+      <span class="emblema-anillo emblema-anillo--1"></span>
+      <span class="emblema-anillo emblema-anillo--2"><span class="emblema-satelite"></span></span>
+      <span class="emblema-disco"><span class="emblema-etiqueta">${etiqueta}</span>${centro}</span>
+    </div>`;
   }
 
   function renderUnidades(modulos) {
@@ -1360,7 +1362,7 @@
           <div class="franja-ilustracion">${m.ilustracion
             // Solo la unidad abierta descarga su ilustracion; las demas, al abrirse.
             ? `<img ${abierta ? "data-src" : "data-src-franja"}="${attrUrl(m.ilustracion)}" alt="" decoding="async">`
-            : ""}</div>
+            : emblemaUnidad(m.nombre, i)}</div>
           <a class="franja-cta" href="${attrUrl(m.url) || "#"}" target="_blank" rel="noopener" data-sectionid="${Number(m.sectionid) || ""}">
             Iniciar módulo <span class="franja-cta-flecha" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></span>
           </a>
@@ -1369,15 +1371,15 @@
       </article>`;
     }).join("");
 
-    // Ilustracion que no carga: un enlace para verla (nunca un recuadro roto).
+    // Ilustracion de Moodle que no carga (archivo borrado, sitio sin https,
+    // pagina anti-bots): se cambia por el emblema generado de esa unidad.
     $$(".franja-ilustracion img", ac).forEach((img) => {
-      const url = img.dataset.src || img.dataset.srcFranja;
       img.addEventListener("error", () => {
+        const f = img.closest(".franja");
         const c = img.closest(".franja-ilustracion");
-        img.remove();
-        if (c && url && !/^\.\/assets\//.test(url)) {
-          c.innerHTML = `<a class="franja-ilustracion-enlace" href="${esc(url)}" target="_blank" rel="noopener"><i class="fa-solid fa-image" aria-hidden="true"></i> Ver ilustración</a>`;
-        }
+        if (!f || !c) return;
+        const i = Number(f.dataset.i);
+        c.innerHTML = emblemaUnidad(modulos[i] ? modulos[i].nombre : "", i);
       });
     });
     $$(".franja-cta", ac).forEach(initUnitCta);
@@ -1663,7 +1665,5 @@
     paso("teclado", initTeclado);
     paso("gesto", initGesto);
     paso("mazo", () => deck.init());
-    if (window.ResizeObserver) paso("resumen", () => new ResizeObserver(revisarResumen).observe($("#heroResumen")));
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => paso("resumen", revisarResumen));
   });
 })();

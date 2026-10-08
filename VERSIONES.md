@@ -9,7 +9,7 @@ propia carpeta y Moodle apunta a una carpeta fija.
 |---|---|
 | `/v1/` | Copia exacta del visor que estaba en produccion el 2026-10-07 (repos *_prueba_piloto). |
 | `/v2/` | Version 2.0.1 (en piloto): sin contenido de ejemplo en cursos reales, videos bajo demanda, animaciones en pausa fuera de pantalla, texto escapado, puente postMessage v2 (compatible con el plugin 4.22). |
-| `/v3/` | Version 3.0.0 (en piloto): diseño de la propuesta de los diseñadores (fondos fotográficos, velos, red de partículas y ondas en un Worker), fondos configurables desde el plugin 4.24 (`fondos`), sin dependencias externas. Usar con el visor de unidad `/v2/`. |
+| `/v3/` | Version 3.1.0 (en piloto): diseño de la propuesta de los diseñadores (fondos fotográficos, velos, red de partículas y ondas en un Worker), fondos configurables desde el plugin 4.24 (`fondos`), sin dependencias externas. Usar con el visor de unidad `/v2/`. |
 | raiz `/` | Igual a v1, solo por compatibilidad. No apuntar Moodle aqui. |
 
 ## Reglas

@@ -15,7 +15,7 @@
 <link rel="preload" href="./assets/fonts/outfit-latin.woff2?v=3" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="./assets/fonts/jost-latin.woff2?v=3" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="./assets/vendor/fontawesome/css/all.min.css?v=6.7.2">
-<link rel="stylesheet" href="./assets/css/visor.css?v=3.0.0">
+<link rel="stylesheet" href="./assets/css/visor.css?v=3.1.0">
 </head>
 <body>
 
@@ -84,8 +84,7 @@
               <span class="inicio-barra" aria-hidden="true"></span>
               <h1 class="inicio-titulo rv rv--titulo" id="heroTitulo" style="--d:.18s"></h1>
               <div class="inicio-resumen-caja rv" id="heroResumenCaja" style="--d:.42s">
-                <p class="inicio-resumen" id="heroResumen"></p>
-                <button class="enlace-mas" type="button" id="heroLeerMas" hidden>Leer más <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+                <p class="inicio-resumen lectura" id="heroResumen"></p>
               </div>
               <div class="inicio-acciones rv" style="--d:.62s">
                 <button class="boton boton--luz" type="button" id="heroIrUnidades">
@@ -124,7 +123,7 @@
           </div>
           <div class="presentacion-play rv rv--escala" id="presentacionPlay" style="--d:.3s">
             <button class="boton-play" type="button" id="presentacionVideoBtn" aria-label="Reproducir el video de presentación del curso">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 6.2v11.6c0 .9 1 1.45 1.76.97l9.1-5.8a1.15 1.15 0 0 0 0-1.94l-9.1-5.8C9.6 4.75 8.6 5.3 8.6 6.2z"/></svg>
             </button>
             <span class="boton-play-texto" aria-hidden="true">Ver la presentación</span>
           </div>
@@ -132,19 +131,25 @@
       </div>
     </section>
 
-    <!-- 3. BIENVENIDA -->
-    <section class="slide bienvenida" id="bienvenida" data-tono="claro" role="group" aria-roledescription="diapositiva" aria-label="Bienvenida">
+    <!-- 3. BIENVENIDA: titulo, frase y sello a la izquierda; la carta completa a la derecha -->
+    <section class="slide bienvenida" id="bienvenida" role="group" aria-roledescription="diapositiva" aria-label="Bienvenida">
       <div class="slide-cuerpo">
         <div class="slide-contenido">
-          <div class="bienvenida-texto">
-            <div class="etiqueta rv"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i> Bienvenida</div>
-            <h2 class="titulo subrayado subrayado--claro rv rv--titulo" id="bienvenidaTitulo" style="--d:.1s">¡Bienvenidos al curso!</h2>
-            <div class="bienvenida-parrafos lectura" id="bienvenidaParrafos"></div>
+          <div class="bienvenida-lado">
+            <div class="etiqueta etiqueta--oro rv"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i> Bienvenida</div>
+            <h2 class="bienvenida-titulo subrayado rv rv--titulo" id="bienvenidaTitulo" style="--d:.1s">¡Bienvenidos al curso!</h2>
+            <figure class="bienvenida-cita rv" id="bienvenidaCita" style="--d:.38s" hidden>
+              <blockquote id="bienvenidaFrase"></blockquote>
+            </figure>
+            <div class="sello rv" style="--d:.52s" aria-hidden="true">
+              <span class="sello-emblema"><img data-src="./assets/img/emblema-96.webp" alt=""><span class="sello-orbita"></span></span>
+              <span class="sello-texto"><strong>Universidad INCCA de Colombia</strong><span>INCCA Virtual · Educación en línea</span></span>
+            </div>
           </div>
-          <figure class="cita panel rv rv--derecha" id="bienvenidaCita" style="--d:.3s" hidden>
-            <blockquote id="bienvenidaFrase"></blockquote>
-            <span class="cita-barra" aria-hidden="true"></span>
-          </figure>
+          <article class="carta rv rv--carta" id="bienvenidaCarta" style="--d:.2s">
+            <div class="carta-cabeza"><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i> Mensaje de bienvenida</div>
+            <div class="carta-texto lectura" id="bienvenidaParrafos"></div>
+          </article>
         </div>
       </div>
     </section>
@@ -192,7 +197,7 @@
             <div class="marco-imagen" id="deaImagenMarco" hidden><img id="deaImagen" alt=""></div>
             <button class="video-tarjeta" type="button" id="deaVideo" aria-label="Reproducir el video del DEA" hidden>
               <img alt="" decoding="async">
-              <span class="boton-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg></span>
+              <span class="boton-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.6 6.2v11.6c0 .9 1 1.45 1.76.97l9.1-5.8a1.15 1.15 0 0 0 0-1.94l-9.1-5.8C9.6 4.75 8.6 5.3 8.6 6.2z"/></svg></span>
               <span class="video-tarjeta-texto">Ver el video</span>
             </button>
           </div>
@@ -209,12 +214,12 @@
             <div class="medallon-caja" hidden>
               <div class="medallon" aria-hidden="true"><span class="medallon-letras"></span></div>
               <button class="video-pildora" type="button" hidden>
-                <span class="video-pildora-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg></span>
+                <span class="video-pildora-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.6 6.2v11.6c0 .9 1 1.45 1.76.97l9.1-5.8a1.15 1.15 0 0 0 0-1.94l-9.1-5.8C9.6 4.75 8.6 5.3 8.6 6.2z"/></svg></span>
                 Ver video de presentación
               </button>
             </div>
             <button class="boton-plata" type="button" aria-label="Ver el video de presentación" hidden>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 6.2v11.6c0 .9 1 1.45 1.76.97l9.1-5.8a1.15 1.15 0 0 0 0-1.94l-9.1-5.8C9.6 4.75 8.6 5.3 8.6 6.2z"/></svg>
             </button>
           </div>
           <div class="docente-info">
@@ -236,12 +241,12 @@
             <div class="medallon-caja" hidden>
               <div class="medallon" aria-hidden="true"><span class="medallon-letras"></span></div>
               <button class="video-pildora" type="button" hidden>
-                <span class="video-pildora-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg></span>
+                <span class="video-pildora-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.6 6.2v11.6c0 .9 1 1.45 1.76.97l9.1-5.8a1.15 1.15 0 0 0 0-1.94l-9.1-5.8C9.6 4.75 8.6 5.3 8.6 6.2z"/></svg></span>
                 Ver video de presentación
               </button>
             </div>
             <button class="boton-plata" type="button" aria-label="Ver el video de presentación" hidden>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 6.2v11.6c0 .9 1 1.45 1.76.97l9.1-5.8a1.15 1.15 0 0 0 0-1.94l-9.1-5.8C9.6 4.75 8.6 5.3 8.6 6.2z"/></svg>
             </button>
           </div>
           <div class="docente-info">
@@ -320,7 +325,7 @@
   <div class="dialogo-pie" id="dialogoContenidoPie" hidden></div>
 </dialog>
 
-<script src="./assets/js/fondo.js?v=3.0.0" defer></script>
-<script src="./assets/js/main.js?v=3.0.0" defer></script>
+<script src="./assets/js/fondo.js?v=3.1.0" defer></script>
+<script src="./assets/js/main.js?v=3.1.0" defer></script>
 </body>
 </html>

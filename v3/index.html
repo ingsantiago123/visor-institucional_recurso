@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visor de recurso — U.INCCA</title>
+<meta name="description" content="Visor interactivo de recursos educativos de la Universidad INCCA de Colombia: portada, presentación, bienvenida, ruta de aprendizaje, DEA, docentes, tutorías y unidades del curso.">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#040B3C">
+
+<link rel="icon" href="./assets/img/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="./assets/img/apple-touch-icon-180.png">
+
+<!-- Todo se sirve desde el propio visor: fuentes, iconos e imagenes (cero terceros). -->
+<link rel="preload" href="./assets/fonts/outfit-latin.woff2?v=3" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="./assets/fonts/jost-latin.woff2?v=3" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="./assets/vendor/fontawesome/css/all.min.css?v=6.7.2">
+<link rel="stylesheet" href="./assets/css/visor.css?v=3.0.0">
+</head>
+<body>
+
+<noscript>
+  <div class="sin-js"><p>Este contenido interactivo necesita JavaScript habilitado en tu navegador. Actívalo y recarga la página.</p></div>
+</noscript>
+
+<div class="deck" id="deck" data-tema="oscuro">
+
+  <!-- Fondo comun de todo el mazo (ver seccion 4 de visor.css y "escenario" en main.js). -->
+  <div class="escenario" id="escenario" data-base="noche" data-tono="oscuro" data-red aria-hidden="true">
+    <div class="escenario-base escenario-base--noche"></div>
+    <div class="escenario-base escenario-base--gris"></div>
+    <div class="escenario-base escenario-base--docente"></div>
+    <img class="escenario-foto" id="fondoFotoA" alt="" decoding="async" fetchpriority="high">
+    <img class="escenario-foto" id="fondoFotoB" alt="" decoding="async">
+    <div class="escenario-velo velo--inicio is-visible" id="fondoVeloA"></div>
+    <div class="escenario-velo" id="fondoVeloB"></div>
+    <canvas class="escenario-ondas" id="fondoOndas"></canvas>
+    <canvas class="escenario-red" id="fondoRed"></canvas>
+    <div class="escenario-vineta"></div>
+  </div>
+  <script>
+    /* La foto de la portada arranca a descargarse YA, antes que el CSS y el
+       JS: la del curso (datos.fondos.hero o .general) o la del visor. Los
+       datos quedan en window.__visorDatos para no volver a leerlos. */
+    (function () {
+      var d = null;
+      try { d = window.name ? JSON.parse(window.name) : null; } catch (e) { d = null; }
+      if (!d || typeof d !== "object" || Array.isArray(d)) d = null;
+      window.__visorDatos = d;
+      var img = document.getElementById("fondoFotoA");
+      var f = d && d.fondos && typeof d.fondos === "object" ? d.fondos : null;
+      var v = f ? (f.hero || f.general) : null;
+      var ok = function (u) { return (typeof u === "string" && /^https?:\/\//i.test(u.trim())) ? u.trim() : ""; };
+      var url = "", clave = "";
+      if (typeof v === "string" && ok(v)) { url = ok(v); clave = "r:" + url + "#oscuro"; }
+      else if (v && typeof v === "object") {
+        if (ok(v.oscuro)) { url = ok(v.oscuro); clave = "g:" + url; }
+        else if (ok(v.original)) { url = ok(v.original); clave = "r:" + url + "#oscuro"; }
+      }
+      if (url) {
+        if (clave.charAt(0) === "r") img.className += " is-propia tono-oscuro";
+        img.src = url;
+      } else {
+        clave = "d:oscuro";
+        img.sizes = "100vw";
+        img.srcset = "./assets/img/fondo-oscuro-960.webp 960w, ./assets/img/fondo-oscuro-1686.webp 1686w";
+        img.src = "./assets/img/fondo-oscuro-1686.webp";
+      }
+      img.setAttribute("data-clave", clave);
+    })();
+  </script>
+
+  <div class="deck-progreso" aria-hidden="true"><span id="deckProgreso"></span></div>
+
+  <main class="slides" id="slides" aria-label="Contenido del curso, por diapositivas">
+
+    <!-- 1. INICIO -->
+    <section class="slide inicio" id="hero" role="group" aria-roledescription="diapositiva" aria-label="Inicio">
+      <div class="slide-cuerpo">
+        <div class="slide-contenido">
+          <div class="inicio-insignias rv" id="heroInsignias" hidden></div>
+          <div class="inicio-grid" id="heroGrid">
+            <div class="inicio-texto">
+              <span class="inicio-barra" aria-hidden="true"></span>
+              <h1 class="inicio-titulo rv rv--titulo" id="heroTitulo" style="--d:.18s"></h1>
+              <div class="inicio-resumen-caja rv" id="heroResumenCaja" style="--d:.42s">
+                <p class="inicio-resumen" id="heroResumen"></p>
+                <button class="enlace-mas" type="button" id="heroLeerMas" hidden>Leer más <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+              </div>
+              <div class="inicio-acciones rv" style="--d:.62s">
+                <button class="boton boton--luz" type="button" id="heroIrUnidades">
+                  <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ir a las unidades
+                </button>
+                <button class="pildora" type="button" id="heroIrAprenderas">
+                  <span class="pildora-icono"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span> ¿Qué aprenderás?
+                </button>
+                <button class="pildora pildora--oro" type="button" id="heroIrTutorias">
+                  <span class="pildora-icono"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span> Conoce tus clases
+                </button>
+                <button class="pildora" type="button" id="heroIrActividades" hidden>
+                  <span class="pildora-icono"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span> Ir a actividades
+                  <span class="pildora-contador" hidden></span>
+                </button>
+              </div>
+            </div>
+            <div class="inicio-ficha rv rv--derecha" id="heroFicha" role="list" aria-label="Ficha del curso" style="--d:.35s"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. PRESENTACION DEL CURSO -->
+    <section class="slide presentacion" id="presentacion" role="group" aria-roledescription="diapositiva" aria-label="Presentación del curso">
+      <div class="slide-cuerpo">
+        <div class="slide-contenido">
+          <div class="presentacion-texto">
+            <h2 class="presentacion-titulo rv rv--titulo" id="presentacionTitulo" style="--d:.1s">Presentación del curso</h2>
+            <div class="presentacion-parrafos lectura" id="presentacionParrafos"></div>
+            <div class="presentacion-acciones rv" style="--d:.55s">
+              <button class="boton boton--marea" type="button" id="presentacionIrUnidades">
+                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ir a las unidades
+              </button>
+            </div>
+          </div>
+          <div class="presentacion-play rv rv--escala" id="presentacionPlay" style="--d:.3s">
+            <button class="boton-play" type="button" id="presentacionVideoBtn" aria-label="Reproducir el video de presentación del curso">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg>
+            </button>
+            <span class="boton-play-texto" aria-hidden="true">Ver la presentación</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. BIENVENIDA -->
+    <section class="slide bienvenida" id="bienvenida" data-tono="claro" role="group" aria-roledescription="diapositiva" aria-label="Bienvenida">
+      <div class="slide-cuerpo">
+        <div class="slide-contenido">
+          <div class="bienvenida-texto">
+            <div class="etiqueta rv"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i> Bienvenida</div>
+            <h2 class="titulo subrayado subrayado--claro rv rv--titulo" id="bienvenidaTitulo" style="--d:.1s">¡Bienvenidos al curso!</h2>
+            <div class="bienvenida-parrafos lectura" id="bienvenidaParrafos"></div>
+          </div>
+          <figure class="cita panel rv rv--derecha" id="bienvenidaCita" style="--d:.3s" hidden>
+            <blockquote id="bienvenidaFrase"></blockquote>
+            <span class="cita-barra" aria-hidden="true"></span>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. QUE APRENDERAS -->
+    <section class="slide aprenderas" id="aprenderas" data-tono="claro" role="group" aria-roledescription="diapositiva" aria-label="Qué aprenderás">
+      <div class="slide-cuerpo">
+        <div class="slide-contenido">
+          <div class="aprenderas-cabeza">
+            <div class="etiqueta rv"><i class="fa-solid fa-route" aria-hidden="true"></i> Ruta de aprendizaje</div>
+            <h2 class="titulo subrayado subrayado--claro rv rv--titulo" style="--d:.1s">¿Qué aprenderás?</h2>
+            <p class="bajada rv" style="--d:.22s">Conoce la ruta de aprendizaje y los principales temas que desarrollarás.</p>
+          </div>
+          <div class="aprenderas-cuerpo" id="aprenderasCuerpo">
+            <div class="aprender-panel panel rv rv--escala" id="aprenderasPanel" style="--d:.18s" hidden>
+              <div class="lectura" id="aprenderasTexto"></div>
+            </div>
+            <div class="tarjetas" id="aprenderasTarjetas" role="list" hidden></div>
+            <div class="marco-imagen rv rv--derecha" id="aprenderasImagenMarco" style="--d:.28s" hidden>
+              <img id="aprenderasImagen" alt="">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. DEA -->
+    <section class="slide dea" id="dea" data-tono="claro" role="group" aria-roledescription="diapositiva" aria-label="Diseño de Experiencia para el Aprendizaje">
+      <div class="slide-cuerpo">
+        <div class="slide-contenido">
+          <div class="dea-panel panel panel--acento rv rv--escala" style="--d:.06s">
+            <div class="etiqueta rv" style="--d:.12s"><i class="fa-solid fa-compass" aria-hidden="true"></i> DEA</div>
+            <h2 class="titulo subrayado rv" id="deaTitulo" style="--d:.2s">DEA · Diseño de Experiencia para el Aprendizaje</h2>
+            <div class="dea-parrafos lectura" id="deaParrafos"></div>
+            <div class="dea-acciones rv" style="--d:.64s">
+              <button class="boton boton--aqua" type="button" id="deaIrUnidades">
+                <i class="fa-solid fa-door-open" aria-hidden="true"></i> Ir a las unidades
+              </button>
+              <a class="boton boton--fantasma" id="deaDescarga" href="#" target="_blank" rel="noopener" hidden>
+                <i class="fa-solid fa-download" aria-hidden="true"></i> Descargar material
+              </a>
+            </div>
+          </div>
+          <div class="dea-medio rv rv--derecha" id="deaMedio" style="--d:.24s" hidden>
+            <div class="marco-imagen" id="deaImagenMarco" hidden><img id="deaImagen" alt=""></div>
+            <button class="video-tarjeta" type="button" id="deaVideo" aria-label="Reproducir el video del DEA" hidden>
+              <img alt="" decoding="async">
+              <span class="boton-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg></span>
+              <span class="video-tarjeta-texto">Ver el video</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. DOCENTE CREADOR (6b, el tutor, usa la misma estructura) -->
+    <section class="slide docente" id="docente" data-rol="Docente creador" data-ojo="Conoce a tu docente" role="group" aria-roledescription="diapositiva" aria-label="Docente creador">
+      <div class="slide-cuerpo">
+        <div class="docente-grid">
+          <div class="docente-medio">
+            <img class="docente-foto" alt="">
+            <div class="medallon-caja" hidden>
+              <div class="medallon" aria-hidden="true"><span class="medallon-letras"></span></div>
+              <button class="video-pildora" type="button" hidden>
+                <span class="video-pildora-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg></span>
+                Ver video de presentación
+              </button>
+            </div>
+            <button class="boton-plata" type="button" aria-label="Ver el video de presentación" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg>
+            </button>
+          </div>
+          <div class="docente-info">
+            <div class="docente-ojo rv"><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i> <span class="docente-ojo-texto">Conoce a tu docente</span></div>
+            <h2 class="docente-nombre rv rv--titulo" style="--d:.16s"></h2>
+            <p class="docente-rol rv" style="--d:.27s"></p>
+            <div class="docente-bio lectura"></div>
+            <div class="docente-etiquetas rv" style="--d:.62s"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide docente" id="docente_tutor" data-rol="Docente tutor" data-ojo="Conoce a tu tutor" role="group" aria-roledescription="diapositiva" aria-label="Docente tutor" hidden>
+      <div class="slide-cuerpo">
+        <div class="docente-grid">
+          <div class="docente-medio">
+            <img class="docente-foto" alt="">
+            <div class="medallon-caja" hidden>
+              <div class="medallon" aria-hidden="true"><span class="medallon-letras"></span></div>
+              <button class="video-pildora" type="button" hidden>
+                <span class="video-pildora-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg></span>
+                Ver video de presentación
+              </button>
+            </div>
+            <button class="boton-plata" type="button" aria-label="Ver el video de presentación" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.6v14.8c0 .8.9 1.3 1.6.9l11.6-7.4a1.05 1.05 0 0 0 0-1.8L8.6 3.7C7.9 3.3 7 3.8 7 4.6z"/></svg>
+            </button>
+          </div>
+          <div class="docente-info">
+            <div class="docente-ojo rv"><i class="fa-solid fa-user-tie" aria-hidden="true"></i> <span class="docente-ojo-texto">Conoce a tu tutor</span></div>
+            <h2 class="docente-nombre rv rv--titulo" style="--d:.16s"></h2>
+            <p class="docente-rol rv" style="--d:.27s"></p>
+            <div class="docente-bio lectura"></div>
+            <div class="docente-etiquetas rv" style="--d:.62s"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. TUTORIAS: un solo enlace (mod/googlemeet u otro) + franjas semanales -->
+    <section class="slide tutorias" id="tutorias" role="group" aria-roledescription="diapositiva" aria-label="Tutorías">
+      <div class="slide-cuerpo">
+        <div class="slide-contenido">
+          <div class="tutorias-cabeza">
+            <div class="etiqueta etiqueta--hielo rv"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Tu horario</div>
+            <h2 class="tutorias-titulo subrayado rv rv--titulo" style="--d:.1s">Conoce tus clases</h2>
+            <p class="tutorias-bajada rv" style="--d:.24s">Nos vemos cada semana, siempre por el mismo enlace.</p>
+          </div>
+          <div class="reunion rv rv--escala" id="reunion" style="--d:.12s">
+            <div class="reunion-icono" aria-hidden="true"><i class="fa-solid fa-video"></i></div>
+            <div class="reunion-etiqueta"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i> Horario semanal</div>
+            <div class="reunion-lista" id="reunionLista" role="list"></div>
+            <p class="reunion-proxima" id="reunionProxima" hidden></p>
+            <a class="reunion-cta" id="reunionCta" href="#" target="_blank" rel="noopener">
+              <i class="fa-solid fa-video" aria-hidden="true"></i> Ir al aula virtual
+            </a>
+            <p class="reunion-nota">Acceso a tu clase en vivo y a las grabaciones: el mismo enlace todas las semanas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. UNIDADES: acordeon de franjas a pantalla completa -->
+    <section class="slide unidades slide--completa" id="unidades" role="group" aria-roledescription="diapositiva" aria-label="Unidades del curso">
+      <div class="slide-cuerpo">
+        <h2 class="sr-only">Unidades del curso</h2>
+        <div class="acordeon" id="acordeon"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <button class="deck-flecha deck-flecha--prev" type="button" id="deckPrev" aria-label="Diapositiva anterior"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+  <button class="deck-flecha deck-flecha--next" type="button" id="deckNext" aria-label="Siguiente diapositiva"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+  <nav class="deck-nav" id="deckNav" aria-label="Diapositivas del curso"></nav>
+  <p class="sr-only" id="deckAnuncio" aria-live="polite"></p>
+</div>
+
+<!-- Dialogo de video: el reproductor se crea al abrir y se destruye al cerrar
+     (deja de sonar). En celular es una capa completa (guia 2.10). -->
+<dialog class="dialogo-video" id="dialogoVideo" aria-labelledby="dialogoVideoTitulo">
+  <div class="dialogo-cabeza">
+    <h2 class="dialogo-titulo" id="dialogoVideoTitulo">Video</h2>
+    <a class="dialogo-externo" id="dialogoVideoExterno" href="#" target="_blank" rel="noopener" hidden>
+      <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> <span>Abrir en Google Drive</span>
+    </a>
+    <button class="dialogo-cerrar" type="button" data-cerrar aria-label="Cerrar el video" autofocus><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+  </div>
+  <div class="dialogo-pantalla" id="dialogoVideoPantalla"></div>
+  <p class="dialogo-nota" id="dialogoVideoNota" hidden>Si el video no carga o Google pide acceso, usa «Abrir en Google Drive».</p>
+</dialog>
+
+<!-- Dialogo de contenido: detalle de actividades, "Leer más" y diapositivas
+     personalizadas a pantalla completa. Se vacia al cerrar. -->
+<dialog class="dialogo-contenido" id="dialogoContenido" aria-labelledby="dialogoContenidoTitulo">
+  <div class="dialogo-cabeza">
+    <h2 class="dialogo-titulo" id="dialogoContenidoTitulo"></h2>
+    <button class="dialogo-cerrar" type="button" data-cerrar aria-label="Cerrar" autofocus><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+  </div>
+  <p class="dialogo-bajada" id="dialogoContenidoBajada" hidden></p>
+  <div class="dialogo-cuerpo" id="dialogoContenidoCuerpo"></div>
+  <div class="dialogo-pie" id="dialogoContenidoPie" hidden></div>
+</dialog>
+
+<script src="./assets/js/fondo.js?v=3.0.0" defer></script>
+<script src="./assets/js/main.js?v=3.0.0" defer></script>
+</body>
+</html>

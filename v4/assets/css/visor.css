@@ -2136,3 +2136,20 @@ dialog { padding: 0; border: 0; }
   .punto-vivo::after, .dialogo-video[open], .dialogo-contenido[open] { animation: none !important; }
   .boton, .pildora, .ficha, .tarjeta, .act-tarjeta, .franja-cta, .reunion-cta { transition: none; }
 }
+
+/* --------------------------------------------------------------------------
+   25. (4.1.0) Video de Google Drive que en este tamano se abre en Drive (celular
+       o menos de 300 px para el reproductor, ver 3c en main.js): marca arriba a
+       la derecha de la tarjeta; el texto del boton ya dice "Ver en Google Drive".
+   -------------------------------------------------------------------------- */
+.video-tarjeta.abre-drive::before {
+  content: "\f08e";
+  position: absolute; top: 12px; right: 12px; z-index: 3;
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .4);
+  background: rgba(4, 11, 60, .55);
+  color: #fff;
+  font: 900 12px/1 "Font Awesome 6 Free";
+}

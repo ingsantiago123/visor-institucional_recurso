@@ -41,7 +41,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "4.0.0";
+  const VERSION = "4.1.0";
   const $ = (sel, ctx) => (ctx || document).querySelector(sel);
   const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
   const reducido = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -512,6 +512,61 @@
   }
 
   /* ---------------------------------------------------------------------
+   * 3c. (4.1.0) Videos de Google Drive en pantallas chicas. El reproductor de
+   *     Drive no se adapta a un celular ni a un espacio de menos de 300 px
+   *     (controles cortados, pide abrir aparte): ahi el video NO se embebe y se
+   *     abre directo en Drive, igual que los enlaces "Ver video" de la
+   *     plantilla de Moodle. YouTube y Vimeo se siguen viendo dentro del visor.
+   *     Mismo bloque en el visor de unidad (v3).
+   * ------------------------------------------------------------------- */
+  const ANCHO_MINIMO_VIDEO = 300;
+  const consultaMovil = window.matchMedia
+    ? window.matchMedia("(max-width: 767.98px), (pointer: coarse) and (max-height: 500px)") : null;
+  // Ancho que tendria el reproductor: el dialogo mide min(1100 px, 94 %); en celular, todo el ancho.
+  function anchoReproductor() {
+    const w = window.innerWidth || document.documentElement.clientWidth || 0;
+    return Math.min(1100, w < 600 ? w : w * 0.94);
+  }
+  function videosEnDrive() {
+    return !!(consultaMovil && consultaMovil.matches) || anchoReproductor() < ANCHO_MINIMO_VIDEO;
+  }
+  function esVideoDrive(url) {
+    const embed = toEmbedUrl(url);
+    return !!embed && origenVideo(embed) === "drive";
+  }
+  // Controles de video de Drive: su texto y su aria-label dicen a donde llevan segun el modo.
+  const controlesDrive = [];
+  function marcarVideoDrive(control, textoEl) {
+    if (!control) return;
+    control.dataset.ariaVisor = control.getAttribute("aria-label") || "";
+    if (textoEl) control.dataset.textoVisor = textoEl.textContent;
+    controlesDrive.push({ control, textoEl });
+    pintarVideoDrive(controlesDrive[controlesDrive.length - 1], videosEnDrive());
+  }
+  function pintarVideoDrive(c, afuera) {
+    c.control.classList.toggle("abre-drive", afuera);
+    const aria = c.control.dataset.ariaVisor;
+    if (aria) {
+      const enDrive = /^Reproducir/i.test(aria) ? aria.replace(/^Reproducir(:)?\s*/i, (m, dosp) => (dosp ? "Abrir en Google Drive: " : "Abrir en Google Drive ")) : aria + " (se abre en Google Drive)";
+      c.control.setAttribute("aria-label", afuera ? enDrive : aria);
+    }
+    if (c.textoEl) c.textoEl.textContent = afuera ? "Ver en Google Drive ↗" : c.control.dataset.textoVisor;
+  }
+  function initVideosDrive() {
+    let pendiente = false;
+    const actualizar = () => {
+      pendiente = false;
+      const afuera = videosEnDrive();
+      document.documentElement.classList.toggle("videos-en-drive", afuera);
+      controlesDrive.forEach((c) => pintarVideoDrive(c, afuera));
+    };
+    const programar = () => { if (!pendiente) { pendiente = true; requestAnimationFrame(actualizar); } };
+    window.addEventListener("resize", programar);
+    if (consultaMovil && consultaMovil.addEventListener) consultaMovil.addEventListener("change", programar);
+    actualizar();
+  }
+
+  /* ---------------------------------------------------------------------
    * 4. Utilidades
    * ------------------------------------------------------------------- */
   function capitalizar(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
@@ -654,8 +709,13 @@
   function abrirVideo(url, titulo, disparador) {
     const embed = toEmbedUrl(url);
     if (!embed) return;
-    const d = $("#dialogoVideo");
     const origen = origenVideo(embed);
+    // (4.1.0) Drive en celular o en menos de 300 px: el video se abre en Drive (ver 3c).
+    if (origen === "drive" && videosEnDrive()) {
+      window.open(enlaceExterno(embed) || urlSegura(url), "_blank", "noopener");
+      return;
+    }
+    const d = $("#dialogoVideo");
     const nombre = decodificar(titulo) || "Video";
     $("#dialogoVideoTitulo").textContent = nombre;
     const externo = enlaceExterno(embed);
@@ -1120,6 +1180,7 @@
     if (embed) {
       $("#presentacionVideoBtn").addEventListener("click", (e) =>
         abrirVideo(datos.video, titulo || "Presentación del curso", e.currentTarget));
+      if (esVideoDrive(datos.video)) marcarVideoDrive($("#presentacionVideoBtn"), $("#presentacionPlay .boton-play-texto"));
     }
   }
 
@@ -1209,6 +1270,7 @@
       medio.hidden = false; video.hidden = false; marco.hidden = true;
       imagenDiferida($("img", video), miniaturaVideo(embed), (img) => img.remove());
       video.addEventListener("click", () => abrirVideo(datos.dea_video, titulo || "Video del DEA", video));
+      if (esVideoDrive(datos.dea_video)) marcarVideoDrive(video, $(".video-tarjeta-texto", video));
     } else {
       soloTexto();
     }
@@ -1275,6 +1337,10 @@
       const abrir = (e) => abrirVideo(profesor.video, `Video de presentación · ${nombre || rolBase}`, e.currentTarget);
       plata.addEventListener("click", abrir);
       pildora.addEventListener("click", abrir);
+      if (esVideoDrive(profesor.video)) {
+        marcarVideoDrive(plata, null);
+        marcarVideoDrive(pildora, $(".video-pildora-texto", pildora));
+      }
     }
   }
   // Una foto chica estirada a media pantalla se ve borrosa: si habria que
@@ -1673,6 +1739,7 @@
     paso("tutorias", () => renderTutorias(datos.tutorias));
     paso("unidades", () => renderUnidades(datos.modulos));
     paso("actividades", () => initActividades(datos));
+    paso("videos_drive", initVideosDrive);
     paso("navegacion", renderNavegacion);
     paso("saltos", initSaltos);
     paso("actividades_inicio", () => renderActividadesInicio(datos));

@@ -10,7 +10,7 @@ propia carpeta y Moodle apunta a una carpeta fija.
 | `/v1/` | Copia exacta del visor que estaba en produccion el 2026-10-07 (repos *_prueba_piloto). |
 | `/v2/` | Version 2.0.1 (en piloto): sin contenido de ejemplo en cursos reales, videos bajo demanda, animaciones en pausa fuera de pantalla, texto escapado, puente postMessage v2 (compatible con el plugin 4.22). |
 | `/v3/` | Version 3.1.0 (en piloto): diseño de la propuesta de los diseñadores (fondos fotográficos, velos, red de partículas y ondas en un Worker), fondos configurables desde el plugin 4.24 (`fondos`), sin dependencias externas. Usar con el visor de unidad `/v2/`. |
-| `/v4/` | Version 4.1.0 (2026-10-23, ajuste global de Moodle): v3 + plantilla nueva de Moodle. Videos de Google Drive en celular o con menos de 300 px para el reproductor: se abren en Drive en vez de embeberse (YouTube y Vimeo siguen dentro del visor). Con `"estructura": "nueva"` (plugin 4.25) la presentacion y la bienvenida se muestran juntas en una diapositiva (titulo y texto de bienvenida al lado del video), como en la plantilla. Usar con el visor de unidad `/v3/`. |
+| `/v4/` | Version 4.1.1 (2026-10-26, ajuste global de Moodle; 4.1.1 reserva el canal de la barra de desplazamiento para que el contenido no se mueva de lado): v3 + plantilla nueva de Moodle. Videos de Google Drive en celular o con menos de 300 px para el reproductor: se abren en Drive en vez de embeberse (YouTube y Vimeo siguen dentro del visor). Con `"estructura": "nueva"` (plugin 4.25) la presentacion y la bienvenida se muestran juntas en una diapositiva (titulo y texto de bienvenida al lado del video), como en la plantilla. Usar con el visor de unidad `/v3/`. |
 | raiz `/` | Igual a v1, solo por compatibilidad. No apuntar Moodle aqui. |
 
 ## Reglas

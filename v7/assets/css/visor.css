@@ -881,15 +881,37 @@ a { color: inherit; }
 }
 .inicio-play .boton-play { width: clamp(84px, 9vh, 104px); height: clamp(84px, 9vh, 104px); }
 /* Con video: cifras compactas en una fila (como las mini tarjetas de la propuesta). */
-.inicio--video .inicio-ficha { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 10px; max-width: 480px; justify-self: stretch; }
-.inicio--video .ficha { min-height: 0; padding: 14px 8px 12px; gap: 6px; align-items: center; justify-content: center; text-align: center; border-radius: 14px; }
-.inicio--video .ficha::before { left: 50%; transform: translateX(-50%); width: 28px; }
-.inicio--video .ficha-icono { width: 28px; height: 28px; font-size: 11px; }
-.inicio--video .ficha-num { font-size: clamp(20px, 2vh + 8px, 26px); }
-.inicio--video .ficha-texto { font-size: 10.5px; line-height: 1.25; }
 .slide[data-familia] .inicio-presentacion-titulo { color: var(--f-titulo); }
 .slide[data-familia] .inicio-presentacion-parrafos p { color: var(--f-texto); }
 :is(.slide[data-familia="blanca"], .slide[data-familia="cian"]) :is(.inicio-resumen, .inicio-presentacion-parrafos p) { text-shadow: none; }
+/* 7.0.1: cifras del curso LIVIANAS (pedido del usuario: las tarjetas se veian sobrecargadas). Sin caja, sin sombra
+   ni icono: numero grande + rotulo corto, separados por lineas finas. Con video van en una fila bajo el play;
+   sin video, en una rejilla de 2 columnas con una raya de acento arriba de cada cifra. */
+#hero .ficha {
+  min-height: 0; padding: 14px 0 0; gap: 6px;
+  background: none; border: 0; border-radius: 0; box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  flex-direction: column; align-items: flex-start; justify-content: flex-start;
+}
+#hero .ficha::after, #hero .ficha-icono { display: none; }
+#hero .ficha::before { left: 0; width: 28px; }
+#hero .ficha:hover { transform: none; box-shadow: none; }
+#hero .ficha--ancha { grid-column: auto; flex-direction: column; align-items: flex-start; padding: 14px 0 0; }
+#hero .ficha-num, #hero .ficha--ancha .ficha-num { font-size: clamp(28px, 2.6vw, 40px); color: var(--f-titulo, #fff); text-shadow: none; }
+#hero .ficha-texto, #hero .ficha--ancha .ficha-texto {
+  color: var(--f-sub, var(--claro-2)); opacity: .85;
+  font: 600 11px/1.3 var(--fuente-texto); letter-spacing: .08em; text-transform: uppercase;
+}
+#hero .inicio-ficha { gap: 22px 32px; max-width: 360px; }
+#hero.inicio--video .inicio-ficha {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); grid-template-columns: none;
+  gap: 0; width: 100%; max-width: 500px; justify-self: center;
+}
+#hero.inicio--video .ficha { min-width: 0; align-items: center; text-align: center; padding: 0 clamp(6px, 1vw, 16px); }
+#hero.inicio--video .ficha + .ficha { border-left: 1px solid var(--f-borde, rgba(101, 203, 227, .28)); }
+#hero.inicio--video .ficha::before { display: none; }
+#hero.inicio--video .ficha-num { font-size: clamp(24px, 2.2vw, 32px); }
+#hero.inicio--video .ficha-texto { font-size: 10px; letter-spacing: .06em; overflow-wrap: anywhere; }
 :is(.slide[data-familia="blanca"], .slide[data-familia="cian"]) .inicio-play::before { background: radial-gradient(circle, rgba(1, 46, 70, .12) 0%, transparent 68%); }
 .slide[data-familia="dorada"] .inicio-play::before { background: radial-gradient(circle, rgba(213, 183, 115, .2) 0%, transparent 68%); }
 

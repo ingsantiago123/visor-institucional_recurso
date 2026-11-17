@@ -1172,6 +1172,10 @@
 
       desactivarMedios(oldEl);
       activarMedios(newEl);
+      // 8.0.0: una diapositiva dormida no se mide (content-visibility): la foto del docente se evalua al entrar.
+      $$(".docente-foto", newEl).forEach((img) => {
+        if (img.complete && img.naturalWidth) evaluarResolucion(img, img.closest(".docente-medio"));
+      });
       cargarImagenes(this.slides[(idx + 1) % total], true);
 
       this.actual = idx;
@@ -1367,7 +1371,9 @@
     $$("[data-contador]", raiz).forEach((el) => {
       const meta = Number(el.dataset.contador) || 0;
       const sufijo = el.dataset.sufijo || "";
-      if (reducido() || meta <= 1) { el.textContent = meta + sufijo; return; }
+      // 8.0.0: al cargar (y en equipos modestos) la cifra aparece final: el conteo cambia el texto en cada cuadro y
+      // forzaba ~90 layouts durante la carga en un celular medio (medido con traza).
+      if (reducido() || meta <= 1 || document.querySelector(".deck--arranque") || document.documentElement.classList.contains("equipo-modesto")) { el.textContent = meta + sufijo; return; }
       const duracion = 1100;
       let inicio = null;
       el.textContent = "0" + sufijo;

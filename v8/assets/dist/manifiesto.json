@@ -1,22 +1,22 @@
 {
   "version": "8.0.0",
   "carpeta": "v8",
-  "construido": "2026-11-17T14:41:59.883Z",
+  "construido": "2026-11-17T14:55:55.085Z",
   "herramienta": "16c0264599d4dd1b94160f4c581f7ad636bdec09",
   "iconos": 156,
   "fuentes": {
-    "assets/css/visor.css": "a4885b942adf7e06a47c1a58fb1ed28bcc87fcf0",
+    "assets/css/visor.css": "9d44da8b05b53c05b692900d6eb3922497c4cb41",
     "assets/css/familias.css": "b47f65d62c411272f96fd12a7be732723fc7fce5",
-    "assets/js/main.js": "557cd40a228cfac01bdcc1cfe41c937cfe9f4adf",
-    "assets/js/fondo.js": "99ae40d8ef0f8a890f08ac2df4cc38b7597f179e",
+    "assets/js/main.js": "206b1a554e48fe189f25e5a3692f8f391820c2d8",
+    "assets/js/fondo.js": "d90bbfe294dfebe3228a5cb01e275e28249b4701",
     "index.dev.html": "c1361a772f7dde10183da5f36f96e36ab56c21c4"
   },
   "generados": {
     "index.html": "b63ee99b65e52027283704c1153f4365faa2a8f5",
     "sw.js": "cab27b203d960cc554b2f99e8a66f5e369ba6ca8",
-    "assets/dist/visor.min.css": "2039261a4f9358f7f4436fae0e1bcb0cd26fa41d",
-    "assets/dist/main.min.js": "f93f55bbc66574e67d6b5926265c06fcd18473ee",
-    "assets/dist/fondo.min.js": "5ca38d1809f3114c035996e91d38b028a35b5163",
+    "assets/dist/visor.min.css": "0c9d9ab67c9478ccb020dc7fb0b8ed7966c1685b",
+    "assets/dist/main.min.js": "bd060af1d665dd91c96eb51be3dded23d66e2fdd",
+    "assets/dist/fondo.min.js": "0f835814e834fd726a26150f227748294cc01b81",
     "assets/dist/iconos-solid.woff2": "17e5d6da11b15ce6e6504d3bb1b0e73125611903",
     "assets/dist/iconos-regular.woff2": "dbed454bae9019f093f8e33418a8361f641dea96"
   }

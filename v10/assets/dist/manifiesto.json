@@ -1,0 +1,23 @@
+{
+  "version": "10.0.0",
+  "carpeta": "v10",
+  "construido": "2026-11-23T15:13:00.317Z",
+  "herramienta": "16c0264599d4dd1b94160f4c581f7ad636bdec09",
+  "iconos": 156,
+  "fuentes": {
+    "assets/css/visor.css": "e8137516b80b1bd5db15020d1cb42be8a09410cf",
+    "assets/css/familias.css": "0cd0d7e7a7505c94333505fb37d9619d77674384",
+    "assets/js/main.js": "bb4b0aea6f5bb3dc57992a1d3678ff4ca13f5401",
+    "assets/js/fondo.js": "d90bbfe294dfebe3228a5cb01e275e28249b4701",
+    "index.dev.html": "9e3fa860d11f8da26040d9d63ee63b02a693525d"
+  },
+  "generados": {
+    "index.html": "b0dff8149818fbe1147dddd7ea572456abe698a8",
+    "sw.js": "e712180814a8c9fafa588404ec9aa0e6ce551c67",
+    "assets/dist/visor.min.css": "06ec4f399fd7b4a72e6e0707e643e7035751d847",
+    "assets/dist/main.min.js": "cc97089523da69648f870c0b83aba6569027c0df",
+    "assets/dist/fondo.min.js": "0f835814e834fd726a26150f227748294cc01b81",
+    "assets/dist/iconos-solid.woff2": "17e5d6da11b15ce6e6504d3bb1b0e73125611903",
+    "assets/dist/iconos-regular.woff2": "dbed454bae9019f093f8e33418a8361f641dea96"
+  }
+}
